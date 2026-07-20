@@ -3,34 +3,63 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteUser = exports.updateUser = exports.getUserByToken = exports.getUserById = exports.getUsers = exports.login = void 0;
+exports.deleteUser = exports.updateUser = exports.getUserByToken = exports.getUserById = exports.getUsers = exports.login = exports.signup = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const db_1 = __importDefault(require("../../db"));
 const jsonwebtoken_1 = require("jsonwebtoken");
 const user_1 = require("../../db/user");
 const drizzle_orm_1 = require("drizzle-orm");
+const errors_1 = require("../../utils/errors");
+const signup = async (data) => {
+    const existingUser = await db_1.default.query.usersTable.findFirst({
+        where: (0, drizzle_orm_1.eq)(user_1.usersTable.email, data.email),
+        columns: { id: true },
+    });
+    if (existingUser)
+        return null;
+    const password = await bcrypt_1.default.hash(data.password, 10);
+    const response = await db_1.default
+        .insert(user_1.usersTable)
+        .values({
+        username: data.username,
+        email: data.email,
+        password,
+        role: data.role,
+    })
+        .returning({
+        id: user_1.usersTable.id,
+        username: user_1.usersTable.username,
+        email: user_1.usersTable.email,
+        role: user_1.usersTable.role,
+    });
+    return response[0];
+};
+exports.signup = signup;
 const login = async (data) => {
     const user = await db_1.default.query.usersTable.findFirst({
         columns: {
             id: true,
+            username: true,
             password: true,
             email: true,
+            role: true,
         },
         where: (0, drizzle_orm_1.eq)(user_1.usersTable.email, data.email),
     });
     if (!user)
-        throw new Error("User not found");
+        throw new errors_1.UnauthorizedError("The email or password is incorrect.");
     const password = await bcrypt_1.default.compare(data.password, user.password);
     if (!password)
-        throw new Error("Invalid password");
+        throw new errors_1.UnauthorizedError("The email or password is incorrect.");
     const secret = process.env.JWT_SECRET;
     if (!secret)
-        throw new Error("JWT_SECRET is not configured");
+        throw new errors_1.ConfigurationError("JWT_SECRET is not configured");
     const token = (0, jsonwebtoken_1.sign)({ id: user.id, accountType: "admin" }, secret, {
         algorithm: "HS256",
         expiresIn: "7d",
     });
-    return { user: { ...user, password: null }, token };
+    const { password: _password, ...safeUser } = user;
+    return { user: safeUser, token };
 };
 exports.login = login;
 const getUsers = async ({ page, perPage }) => {
@@ -60,14 +89,14 @@ const getUserById = async (id) => {
         },
     });
     if (!user)
-        throw new Error("User not found");
+        throw new errors_1.NotFoundError("User not found");
     return user;
 };
 exports.getUserById = getUserById;
 const getUserByToken = async (token) => {
     const secret = process.env.JWT_SECRET;
     if (!secret)
-        throw new Error("JWT_SECRET is not configured");
+        throw new errors_1.ConfigurationError("JWT_SECRET is not configured");
     const payload = (0, jsonwebtoken_1.verify)(token, secret, { algorithms: ["HS256"] });
     if (typeof payload === "string" ||
         typeof payload.id !== "string" ||
@@ -87,7 +116,7 @@ const updateUser = async (data) => {
         where: (0, drizzle_orm_1.eq)(user_1.usersTable.id, data.id),
     });
     if (!user)
-        throw new Error("User not found");
+        throw new errors_1.NotFoundError("User not found");
     let hashedPassword = null;
     if (data.password) {
         hashedPassword = await bcrypt_1.default.hash(data.password, 10);
@@ -111,7 +140,12 @@ const deleteUser = async (id) => {
     const data = await db_1.default
         .delete(user_1.usersTable)
         .where((0, drizzle_orm_1.eq)(user_1.usersTable.id, id))
-        .returning();
+        .returning({
+        id: user_1.usersTable.id,
+        username: user_1.usersTable.username,
+        email: user_1.usersTable.email,
+        role: user_1.usersTable.role,
+    });
     return data;
 };
 exports.deleteUser = deleteUser;

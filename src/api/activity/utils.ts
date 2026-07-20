@@ -6,9 +6,13 @@ import {
 } from "../../db/activity";
 import { removeFiles, uploadFile } from "../../utils/file";
 import { TActivity, UActivity } from "./types";
+import db from "../../db";
+import { BadRequestError, ConflictError } from "../../utils/errors";
+
+type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 export const insertActivityChildren = async (
-  tx: any,
+  tx: DbTransaction,
   activityId: string,
   data: TActivity | UActivity,
 ) => {
@@ -44,15 +48,17 @@ const validateActivityChildIds = (
   relationName: string,
 ) => {
   if (new Set(incomingIds).size !== incomingIds.length) {
-    throw new Error(`Duplicate ${relationName} ID`);
+    throw new ConflictError(`Duplicate ${relationName} ID`);
   }
   if (incomingIds.some((id) => !existingIds.includes(id))) {
-    throw new Error(`${relationName} does not belong to this activity`);
+    throw new BadRequestError(
+      `${relationName} does not belong to this activity`,
+    );
   }
 };
 
 export const syncActivityImages = async (
-  tx: any,
+  tx: DbTransaction,
   activityId: string,
   images: NonNullable<UActivity["images"]>,
 ) => {
@@ -63,7 +69,7 @@ export const syncActivityImages = async (
   const incomingIds = images.flatMap((image) => (image.id ? [image.id] : []));
   validateActivityChildIds(
     incomingIds,
-    existing.map((item: any) => item.id),
+    existing.map((item) => item.id),
     "activity image",
   );
 
@@ -92,7 +98,7 @@ export const syncActivityImages = async (
 };
 
 export const syncActivityLabels = async (
-  tx: any,
+  tx: DbTransaction,
   activityId: string,
   items: NonNullable<UActivity["highlights"]>,
   table: typeof activityHighlightsTable | typeof activityIncludedItemsTable,
@@ -105,7 +111,7 @@ export const syncActivityLabels = async (
   const incomingIds = items.flatMap((item) => (item.id ? [item.id] : []));
   validateActivityChildIds(
     incomingIds,
-    existing.map((item: any) => item.id),
+    existing.map((item) => item.id),
     relationName,
   );
 

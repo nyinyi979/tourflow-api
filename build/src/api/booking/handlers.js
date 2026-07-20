@@ -13,7 +13,6 @@ const handleCreateBooking = async (req, res) => {
         return res.status(201).send({ ...messages_1.messages.createOk, data });
     }
     catch (err) {
-        console.log(err);
         throw err;
     }
 };
@@ -31,7 +30,6 @@ const handleGetBookings = async (req, res) => {
             .send({ ...messages_1.messages.verifyOk, ...params, ...response });
     }
     catch (err) {
-        console.log(err);
         throw err;
     }
 };
@@ -48,7 +46,6 @@ const handleGetMyBookings = async (req, res) => {
             .send({ ...messages_1.messages.verifyOk, ...params, ...response });
     }
     catch (err) {
-        console.log(err);
         throw err;
     }
 };
@@ -66,7 +63,6 @@ const handleGetBookingById = async (req, res) => {
         return res.status(200).send({ ...messages_1.messages.verifyOk, data });
     }
     catch (err) {
-        console.log(err);
         throw err;
     }
 };
@@ -89,7 +85,6 @@ const handleUpdateBooking = async (req, res) => {
         return res.status(200).send({ ...messages_1.messages.updateOk, data });
     }
     catch (err) {
-        console.log(err);
         throw err;
     }
 };
@@ -109,7 +104,6 @@ const handleDeleteBooking = async (req, res) => {
         return res.status(200).send({ ...messages_1.messages.deleteOk, data });
     }
     catch (err) {
-        console.log(err);
         throw err;
     }
 };

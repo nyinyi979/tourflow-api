@@ -13,19 +13,21 @@ const handleFileUploadTmp = async (req, res) => {
         const parts = req.parts();
         const { imageBuffer, body } = await (0, handleFormData_1.default)(parts);
         if (!imageBuffer) {
-            return res.status(400).send({ message: "File is required" });
+            return res
+                .status(400)
+                .send({ ...messages_1.messages.schemaError, message: "File is required." });
         }
         const result = await (0, controllers_1.createFile)({
             buffer: imageBuffer,
             filename: body.image.filename,
         });
-        res.code(201).send({
-            ...messages_1.messages.verifyOk,
+        return res.code(201).send({
+            ...messages_1.messages.createOk,
             data: { url: result, filename: body.image.filename },
         });
     }
     catch (err) {
-        res.code(500).send({ ...messages_1.messages.somethingWentWrong });
+        throw err;
     }
 };
 exports.handleFileUploadTmp = handleFileUploadTmp;
@@ -43,11 +45,9 @@ const handleCreateBatchFiles = async (req, res) => {
             }
         }
         const result = await (0, controllers_1.createBatchFiles)(files);
-        console.log(result);
-        res.code(201).send({ ...messages_1.messages.verifyOk, data: result });
+        return res.code(201).send({ ...messages_1.messages.createOk, data: result });
     }
     catch (err) {
-        console.log(err);
         throw err;
     }
 };
@@ -56,8 +56,8 @@ const handleUploadFile = async (req, res) => {
     try {
         const body = req.body;
         const result = await (0, controllers_1.uploadFile)(body.url);
-        res.code(201).send({
-            ...messages_1.messages.verifyOk,
+        return res.code(201).send({
+            ...messages_1.messages.createOk,
             data: { url: result },
         });
     }
@@ -70,12 +70,14 @@ const handleRemoveFile = async (req, res) => {
     try {
         const { url } = req.query;
         if (!url)
-            return res.code(400).send({ message: "URL param is required" });
+            return res
+                .code(400)
+                .send({ ...messages_1.messages.schemaError, message: "URL is required." });
         const result = await (0, controllers_1.deleteFile)(url);
-        res.code(200).send({ ...messages_1.messages.verifyOk, data: result });
+        return res.code(200).send({ ...messages_1.messages.verifyOk, data: result });
     }
     catch (err) {
-        res.code(500).send({ ...messages_1.messages.somethingWentWrong });
+        throw err;
     }
 };
 exports.handleRemoveFile = handleRemoveFile;

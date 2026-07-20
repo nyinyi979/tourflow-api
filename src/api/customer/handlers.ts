@@ -15,6 +15,7 @@ import {
   TCustomerUpdate,
 } from "./types";
 import { handleCustomerAvatar, removeCustomerAvatars } from "./utils";
+import { NotFoundError } from "../../utils/errors";
 
 export const handleCustomerSignup = async (
   req: FastifyRequest,
@@ -44,7 +45,6 @@ export const handleCustomerSignup = async (
     if (!customerCreated) {
       await removeCustomerAvatars([uploadedAvatar]);
     }
-    console.log(err);
     throw err;
   }
 };
@@ -60,7 +60,6 @@ export const handleCustomerLogin = async (
     }
     return res.code(200).send({ ...messages.verifyOk, ...data });
   } catch (err) {
-    console.log(err);
     throw err;
   }
 };
@@ -72,9 +71,7 @@ export const handleGetCustomers = async (
   try {
     const params = req.query as CustomerReadRequest;
     if (params.page === undefined || params.perPage === undefined) {
-      return res
-        .status(500)
-        .send({ message: "Params page and perPage are required" });
+      return res.status(400).send({ ...messages.schemaError });
     }
 
     const response = await getCustomers({
@@ -87,7 +84,6 @@ export const handleGetCustomers = async (
       .status(200)
       .send({ ...messages.verifyOk, ...params, ...response });
   } catch (err) {
-    console.log(err);
     throw err;
   }
 };
@@ -101,7 +97,6 @@ export const handleGetCustomerByToken = async (
     if (!customer) return;
     return res.code(200).send({ ...messages.verifyOk, data: customer });
   } catch (err) {
-    console.log(err);
     throw err;
   }
 };
@@ -124,7 +119,7 @@ export const handleUpdateCustomer = async (
     uploadedAvatar = avatarResult.uploadedAvatar;
 
     const data = await updateCustomer(customer.id, body);
-    if (!data) throw new Error("Customer not found");
+    if (!data) throw new NotFoundError("Customer not found");
     customerUpdated = true;
 
     const replacedAvatar =
@@ -142,7 +137,6 @@ export const handleUpdateCustomer = async (
     if (!customerUpdated) {
       await removeCustomerAvatars([uploadedAvatar]);
     }
-    console.log(err);
     throw err;
   }
 };
@@ -155,11 +149,10 @@ export const handleDeleteCustomer = async (
     const customer = await authenticateCustomer(req, res);
     if (!customer) return;
     const data = await deleteCustomer(customer.id);
-    if (!data) throw new Error("Customer not found");
+    if (!data) throw new NotFoundError("Customer not found");
     await removeCustomerAvatars([data.avatar]);
     return res.code(200).send({ ...messages.deleteOk, data });
   } catch (err) {
-    console.log(err);
     throw err;
   }
 };

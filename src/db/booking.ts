@@ -11,6 +11,7 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { activitiesTable } from "./activity";
 import { customersTable } from "./customer";
 import { toursTable } from "./tour";
@@ -109,4 +110,3 @@ export const bookingActivityRelations = relations(
     }),
   }),
 );
-import { relations } from "drizzle-orm";

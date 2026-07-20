@@ -1,32 +1,67 @@
 import bcrypt from "bcrypt";
 import db from "../../db";
-import { TLogin, TUpdate } from "./types";
+import { TLogin, TSignup, TUpdate } from "./types";
 import { PagKeys } from "../types";
 import { sign, verify } from "jsonwebtoken";
 import { usersTable } from "../../db/user";
 import { eq } from "drizzle-orm";
+import {
+  ConfigurationError,
+  NotFoundError,
+  UnauthorizedError,
+} from "../../utils/errors";
+
+export const signup = async (data: TSignup) => {
+  const existingUser = await db.query.usersTable.findFirst({
+    where: eq(usersTable.email, data.email),
+    columns: { id: true },
+  });
+  if (existingUser) return null;
+
+  const password = await bcrypt.hash(data.password, 10);
+  const response = await db
+    .insert(usersTable)
+    .values({
+      username: data.username,
+      email: data.email,
+      password,
+      role: data.role,
+    })
+    .returning({
+      id: usersTable.id,
+      username: usersTable.username,
+      email: usersTable.email,
+      role: usersTable.role,
+    });
+
+  return response[0];
+};
 
 export const login = async (data: TLogin) => {
   const user = await db.query.usersTable.findFirst({
     columns: {
       id: true,
+      username: true,
       password: true,
       email: true,
+      role: true,
     },
     where: eq(usersTable.email, data.email),
   });
-  if (!user) throw new Error("User not found");
+  if (!user) throw new UnauthorizedError("The email or password is incorrect.");
   const password = await bcrypt.compare(data.password, user.password);
-  if (!password) throw new Error("Invalid password");
+  if (!password)
+    throw new UnauthorizedError("The email or password is incorrect.");
 
   const secret = process.env.JWT_SECRET;
-  if (!secret) throw new Error("JWT_SECRET is not configured");
+  if (!secret) throw new ConfigurationError("JWT_SECRET is not configured");
 
   const token = sign({ id: user.id, accountType: "admin" }, secret, {
     algorithm: "HS256",
     expiresIn: "7d",
   });
-  return { user: { ...user, password: null }, token };
+  const { password: _password, ...safeUser } = user;
+  return { user: safeUser, token };
 };
 
 export const getUsers = async ({ page, perPage }: PagKeys) => {
@@ -55,13 +90,13 @@ export const getUserById = async (id: string) => {
       role: true,
     },
   });
-  if (!user) throw new Error("User not found");
+  if (!user) throw new NotFoundError("User not found");
   return user;
 };
 
 export const getUserByToken = async (token: string) => {
   const secret = process.env.JWT_SECRET;
-  if (!secret) throw new Error("JWT_SECRET is not configured");
+  if (!secret) throw new ConfigurationError("JWT_SECRET is not configured");
 
   const payload = verify(token, secret, { algorithms: ["HS256"] });
   if (
@@ -84,7 +119,7 @@ export const updateUser = async (data: TUpdate) => {
     },
     where: eq(usersTable.id, data.id),
   });
-  if (!user) throw new Error("User not found");
+  if (!user) throw new NotFoundError("User not found");
   let hashedPassword = null;
   if (data.password) {
     hashedPassword = await bcrypt.hash(data.password, 10);
@@ -107,6 +142,11 @@ export const deleteUser = async (id: string) => {
   const data = await db
     .delete(usersTable)
     .where(eq(usersTable.id, id))
-    .returning();
+    .returning({
+      id: usersTable.id,
+      username: usersTable.username,
+      email: usersTable.email,
+      role: usersTable.role,
+    });
   return data;
 };

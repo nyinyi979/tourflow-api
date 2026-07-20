@@ -9,6 +9,7 @@ import {
   TCustomerSignup,
   TCustomerUpdate,
 } from "./types";
+import { ConfigurationError } from "../../utils/errors";
 
 const customerColumns = {
   id: customersTable.id,
@@ -54,7 +55,7 @@ export const loginCustomer = async (data: TCustomerLogin) => {
   if (!passwordMatches) return null;
 
   const secret = process.env.JWT_SECRET;
-  if (!secret) throw new Error("JWT_SECRET is not configured");
+  if (!secret) throw new ConfigurationError("JWT_SECRET is not configured");
 
   const token = sign({ id: customer.id, accountType: "customer" }, secret, {
     algorithm: "HS256",
@@ -143,7 +144,7 @@ export const getCustomerById = async (id: string) => {
 
 export const getCustomerByToken = async (token: string) => {
   const secret = process.env.JWT_SECRET;
-  if (!secret) throw new Error("JWT_SECRET is not configured");
+  if (!secret) throw new ConfigurationError("JWT_SECRET is not configured");
 
   const payload = verify(token, secret, { algorithms: ["HS256"] });
   if (

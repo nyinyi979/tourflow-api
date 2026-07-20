@@ -4,6 +4,7 @@ exports.removeActivityImages = exports.handleActivityImages = exports.syncActivi
 const drizzle_orm_1 = require("drizzle-orm");
 const activity_1 = require("../../db/activity");
 const file_1 = require("../../utils/file");
+const errors_1 = require("../../utils/errors");
 const insertActivityChildren = async (tx, activityId, data) => {
     var _a, _b, _c;
     if ((_a = data.images) === null || _a === void 0 ? void 0 : _a.length)
@@ -28,10 +29,10 @@ const insertActivityChildren = async (tx, activityId, data) => {
 exports.insertActivityChildren = insertActivityChildren;
 const validateActivityChildIds = (incomingIds, existingIds, relationName) => {
     if (new Set(incomingIds).size !== incomingIds.length) {
-        throw new Error(`Duplicate ${relationName} ID`);
+        throw new errors_1.ConflictError(`Duplicate ${relationName} ID`);
     }
     if (incomingIds.some((id) => !existingIds.includes(id))) {
-        throw new Error(`${relationName} does not belong to this activity`);
+        throw new errors_1.BadRequestError(`${relationName} does not belong to this activity`);
     }
 };
 const syncActivityImages = async (tx, activityId, images) => {

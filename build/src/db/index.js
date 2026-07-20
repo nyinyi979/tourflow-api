@@ -63,6 +63,5 @@ const db = (0, node_postgres_1.drizzle)({
         ...tourSchema,
         ...userSchema,
     },
-    connection: process.env.DATABASE_URL,
 });
 exports.default = db;

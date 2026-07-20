@@ -26,7 +26,6 @@ export const handleCreateTestimonial = async (
     return res.status(201).send({ ...messages.createOk, data });
   } catch (err) {
     if (!saved) await removeTestimonialAvatars([uploaded]);
-    console.log(err);
     throw err;
   }
 };
@@ -46,7 +45,6 @@ export const handleGetTestimonials = async (
       .status(200)
       .send({ ...messages.verifyOk, ...params, ...response });
   } catch (err) {
-    console.log(err);
     throw err;
   }
 };
@@ -61,7 +59,6 @@ export const handleGetTestimonialById = async (
     if (!data) return res.status(404).send({ ...messages.notFound });
     return res.status(200).send({ ...messages.verifyOk, data });
   } catch (err) {
-    console.log(err);
     throw err;
   }
 };
@@ -91,7 +88,6 @@ export const handleUpdateTestimonial = async (
     return res.status(200).send({ ...messages.updateOk, data });
   } catch (err) {
     if (!saved) await removeTestimonialAvatars([uploaded]);
-    console.log(err);
     throw err;
   }
 };
@@ -107,7 +103,6 @@ export const handleDeleteTestimonial = async (
     await removeTestimonialAvatars([data.avatar]);
     return res.status(200).send({ ...messages.deleteOk, data });
   } catch (err) {
-    console.log(err);
     throw err;
   }
 };

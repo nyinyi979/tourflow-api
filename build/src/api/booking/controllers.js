@@ -10,6 +10,7 @@ const db_1 = __importDefault(require("../../db"));
 const activity_1 = require("../../db/activity");
 const booking_1 = require("../../db/booking");
 const tour_1 = require("../../db/tour");
+const errors_1 = require("../../utils/errors");
 const bookingWith = {
     customer: true,
     tour: true,
@@ -59,7 +60,7 @@ const getItemPrice = async (data) => {
 const createBooking = async (customerId, data) => {
     const item = await getItemPrice(data);
     if (!item)
-        throw new Error("Booking item not found");
+        throw new errors_1.NotFoundError("Booking item not found");
     const adults = data.adults;
     const children = data.children || 0;
     const totalPrice = item.price * adults + Math.round(item.price * 0.5) * children;
@@ -141,7 +142,7 @@ const updateBooking = async (id, data) => {
     if (data.adults !== undefined || data.children !== undefined) {
         const item = await getItemPrice(current);
         if (!item)
-            throw new Error("Booking item not found");
+            throw new errors_1.NotFoundError("Booking item not found");
         const adults = (_a = data.adults) !== null && _a !== void 0 ? _a : current.adults;
         const children = (_b = data.children) !== null && _b !== void 0 ? _b : current.children;
         totalPrice = item.price * adults + Math.round(item.price * 0.5) * children;

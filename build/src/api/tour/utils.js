@@ -4,6 +4,7 @@ exports.syncTourItinerary = exports.syncTourHighlights = exports.syncTourImages 
 const drizzle_orm_1 = require("drizzle-orm");
 const tour_1 = require("../../db/tour");
 const file_1 = require("../../utils/file");
+const errors_1 = require("../../utils/errors");
 const insertTourChildren = async (tx, tourId, data) => {
     var _a, _b, _c;
     if ((_a = data.images) === null || _a === void 0 ? void 0 : _a.length)
@@ -53,10 +54,10 @@ const removeTourImages = async (urls, current = []) => (0, file_1.removeFiles)([
 exports.removeTourImages = removeTourImages;
 const validateTourChildIds = (incomingIds, existingIds, relationName) => {
     if (new Set(incomingIds).size !== incomingIds.length) {
-        throw new Error(`Duplicate ${relationName} ID`);
+        throw new errors_1.ConflictError(`Duplicate ${relationName} ID`);
     }
     if (incomingIds.some((id) => !existingIds.includes(id))) {
-        throw new Error(`${relationName} does not belong to this tour`);
+        throw new errors_1.BadRequestError(`${relationName} does not belong to this tour`);
     }
 };
 const syncTourImages = async (tx, tourId, images) => {
@@ -126,7 +127,7 @@ const syncTourItinerary = async (tx, tourId, itinerary) => {
     const incomingIds = itinerary.flatMap((item) => (item.id ? [item.id] : []));
     validateTourChildIds(incomingIds, existing.map((item) => item.id), "itinerary item");
     if (new Set(itinerary.map((item) => item.day)).size !== itinerary.length)
-        throw new Error("Itinerary days must be unique");
+        throw new errors_1.ConflictError("Itinerary days must be unique");
     // Days are temporarily negative for the same reason as ordered positions above.
     for (const [index, item] of existing.entries())
         await tx

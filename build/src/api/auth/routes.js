@@ -23,6 +23,7 @@ async function authRoutes(app) {
         schema: {
             tags: ["Authentication"],
             summary: "List users",
+            security: [{ accessToken: [] }],
             querystring: {
                 type: "object",
                 required: ["page", "perPage"],
@@ -54,9 +55,11 @@ async function authRoutes(app) {
         },
     }, handlers_1.handleGetUserByToken);
     app.put("/", {
+        preHandler: auth_1.authenticateAdmin,
         schema: {
             tags: ["Authentication"],
             summary: "Update a user",
+            security: [{ accessToken: [] }],
             body: {
                 type: "object",
                 required: ["id"],

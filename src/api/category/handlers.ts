@@ -32,7 +32,6 @@ export const handleCreateCategory = async (
     return res.status(201).send({ ...messages.createOk, data });
   } catch (err) {
     if (!created) await removeCategoryImages([uploadedImage]);
-    console.log(err);
     throw err;
   }
 };
@@ -52,7 +51,6 @@ export const handleGetCategories = async (
       .status(200)
       .send({ ...messages.verifyOk, ...params, ...response });
   } catch (err) {
-    console.log(err);
     throw err;
   }
 };
@@ -66,7 +64,6 @@ export const handleGetAllCategories = async (
     const response = await getAllCategories(params.type);
     return res.status(200).send({ ...messages.verifyOk, data: response });
   } catch (err) {
-    console.log(err);
     throw err;
   }
 };
@@ -81,7 +78,6 @@ export const handleGetCategoryById = async (
     if (!data) return res.status(404).send({ ...messages.notFound });
     return res.status(200).send({ ...messages.verifyOk, data });
   } catch (err) {
-    console.log(err);
     throw err;
   }
 };
@@ -112,7 +108,6 @@ export const handleUpdateCategory = async (
     return res.status(200).send({ ...messages.updateOk, data });
   } catch (err) {
     if (!updated) await removeCategoryImages([uploadedImage]);
-    console.log(err);
     throw err;
   }
 };
@@ -128,7 +123,6 @@ export const handleDeleteCategory = async (
     await removeCategoryImages([data.image]);
     return res.status(200).send({ ...messages.deleteOk, data });
   } catch (err) {
-    console.log(err);
     throw err;
   }
 };

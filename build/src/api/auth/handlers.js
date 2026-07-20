@@ -1,16 +1,27 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.handleDeleteAdmin = exports.handleUpdateUser = exports.handleGetUserByToken = exports.handleGetUserById = exports.handleGetUsers = exports.handleLogin = void 0;
+exports.handleDeleteAdmin = exports.handleUpdateUser = exports.handleGetUserByToken = exports.handleGetUserById = exports.handleGetUsers = exports.handleLogin = exports.handleSignup = void 0;
 const messages_1 = require("../messages");
 const controllers_1 = require("./controllers");
 const auth_1 = require("../../utils/auth");
+const handleSignup = async (req, res) => {
+    try {
+        const data = await (0, controllers_1.signup)(req.body);
+        if (!data)
+            return res.status(409).send({ ...messages_1.messages.duplicateEmail });
+        return res.status(201).send({ ...messages_1.messages.createOk, data });
+    }
+    catch (err) {
+        throw err;
+    }
+};
+exports.handleSignup = handleSignup;
 const handleLogin = async (req, res) => {
     try {
         const data = await (0, controllers_1.login)(req.body);
         res.code(200).send({ ...messages_1.messages.verifyOk, ...data });
     }
     catch (err) {
-        console.log(err);
         throw err;
     }
 };
@@ -18,8 +29,8 @@ exports.handleLogin = handleLogin;
 const handleGetUsers = async (req, res) => {
     try {
         const params = req.query;
-        if (!params.page || !params.perPage)
-            res.status(500).send({ message: "Params page and perPage are required" });
+        if (params.page === undefined || params.perPage === undefined)
+            return res.status(400).send({ ...messages_1.messages.schemaError });
         const response = await (0, controllers_1.getUsers)({
             page: +params.page,
             perPage: +params.perPage,
@@ -27,7 +38,6 @@ const handleGetUsers = async (req, res) => {
         res.code(200).send({ ...messages_1.messages.verifyOk, ...response });
     }
     catch (err) {
-        console.log(err);
         throw err;
     }
 };
@@ -36,12 +46,11 @@ const handleGetUserById = async (req, res) => {
     try {
         const params = req.params;
         if (!params.id)
-            res.status(500).send({ message: "Params ID is required" });
+            return res.status(400).send({ ...messages_1.messages.schemaError });
         const response = await (0, controllers_1.getUserById)(params.id);
         res.code(200).send({ ...messages_1.messages.verifyOk, data: response });
     }
     catch (err) {
-        console.log(err);
         throw err;
     }
 };
@@ -54,7 +63,6 @@ const handleGetUserByToken = async (req, res) => {
         res.code(200).send({ ...messages_1.messages.verifyOk, data });
     }
     catch (err) {
-        console.log(err);
         throw err;
     }
 };
@@ -65,7 +73,6 @@ const handleUpdateUser = async (req, res) => {
         res.code(200).send({ ...messages_1.messages.verifyOk, data });
     }
     catch (err) {
-        console.log(err);
         throw err;
     }
 };
@@ -74,12 +81,11 @@ const handleDeleteAdmin = async (req, res) => {
     try {
         const params = req.params;
         if (!params.id)
-            res.status(500).send({ message: "Params ID is required" });
+            return res.status(400).send({ ...messages_1.messages.schemaError });
         const data = await (0, controllers_1.deleteUser)(params.id);
         res.code(200).send({ ...messages_1.messages.verifyOk, data });
     }
     catch (err) {
-        console.log(err);
         throw err;
     }
 };

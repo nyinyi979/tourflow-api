@@ -28,7 +28,6 @@ const db = drizzle({
     ...tourSchema,
     ...userSchema,
   },
-  connection: process.env.DATABASE_URL!,
 });
 
 export default db;

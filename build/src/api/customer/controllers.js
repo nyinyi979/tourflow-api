@@ -9,6 +9,7 @@ const drizzle_orm_1 = require("drizzle-orm");
 const jsonwebtoken_1 = require("jsonwebtoken");
 const db_1 = __importDefault(require("../../db"));
 const customer_1 = require("../../db/customer");
+const errors_1 = require("../../utils/errors");
 const customerColumns = {
     id: customer_1.customersTable.id,
     name: customer_1.customersTable.name,
@@ -47,7 +48,7 @@ const loginCustomer = async (data) => {
         return null;
     const secret = process.env.JWT_SECRET;
     if (!secret)
-        throw new Error("JWT_SECRET is not configured");
+        throw new errors_1.ConfigurationError("JWT_SECRET is not configured");
     const token = (0, jsonwebtoken_1.sign)({ id: customer.id, accountType: "customer" }, secret, {
         algorithm: "HS256",
         expiresIn: "7d",
@@ -117,7 +118,7 @@ exports.getCustomerById = getCustomerById;
 const getCustomerByToken = async (token) => {
     const secret = process.env.JWT_SECRET;
     if (!secret)
-        throw new Error("JWT_SECRET is not configured");
+        throw new errors_1.ConfigurationError("JWT_SECRET is not configured");
     const payload = (0, jsonwebtoken_1.verify)(token, secret, { algorithms: ["HS256"] });
     if (typeof payload === "string" ||
         typeof payload.id !== "string" ||

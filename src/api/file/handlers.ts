@@ -17,18 +17,20 @@ export const handleFileUploadTmp = async (
     const parts = req.parts();
     const { imageBuffer, body } = await handleFormData(parts);
     if (!imageBuffer) {
-      return res.status(400).send({ message: "File is required" });
+      return res
+        .status(400)
+        .send({ ...messages.schemaError, message: "File is required." });
     }
     const result = await createFile({
       buffer: imageBuffer,
       filename: body.image.filename,
     });
-    res.code(201).send({
-      ...messages.verifyOk,
+    return res.code(201).send({
+      ...messages.createOk,
       data: { url: result, filename: body.image.filename },
     });
   } catch (err) {
-    res.code(500).send({ ...messages.somethingWentWrong });
+    throw err;
   }
 };
 
@@ -49,10 +51,8 @@ export const handleCreateBatchFiles = async (
       }
     }
     const result = await createBatchFiles(files);
-    console.log(result);
-    res.code(201).send({ ...messages.verifyOk, data: result });
+    return res.code(201).send({ ...messages.createOk, data: result });
   } catch (err) {
-    console.log(err);
     throw err;
   }
 };
@@ -64,8 +64,8 @@ export const handleUploadFile = async (
   try {
     const body = req.body as { url: string };
     const result = await uploadFile(body.url);
-    res.code(201).send({
-      ...messages.verifyOk,
+    return res.code(201).send({
+      ...messages.createOk,
       data: { url: result },
     });
   } catch (err) {
@@ -78,11 +78,14 @@ export const handleRemoveFile = async (
 ) => {
   try {
     const { url } = req.query as { url: string };
-    if (!url) return res.code(400).send({ message: "URL param is required" });
+    if (!url)
+      return res
+        .code(400)
+        .send({ ...messages.schemaError, message: "URL is required." });
     const result = await deleteFile(url);
-    res.code(200).send({ ...messages.verifyOk, data: result });
+    return res.code(200).send({ ...messages.verifyOk, data: result });
   } catch (err) {
-    res.code(500).send({ ...messages.somethingWentWrong });
+    throw err;
   }
 };
 

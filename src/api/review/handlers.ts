@@ -21,7 +21,6 @@ export const handleCreateReview = async (
     const data = await createReview(customer, req.body as TReview);
     return res.status(201).send({ ...messages.createOk, data });
   } catch (err) {
-    console.log(err);
     throw err;
   }
 };
@@ -40,7 +39,6 @@ export const handleGetPublishedReviews = async (
       .status(200)
       .send({ ...messages.verifyOk, ...params, ...response });
   } catch (err) {
-    console.log(err);
     throw err;
   }
 };
@@ -59,7 +57,6 @@ export const handleGetAdminReviews = async (
       .status(200)
       .send({ ...messages.verifyOk, ...params, ...response });
   } catch (err) {
-    console.log(err);
     throw err;
   }
 };
@@ -73,7 +70,6 @@ export const handleGetReviewById = async (
       return res.status(404).send({ ...messages.notFound });
     return res.status(200).send({ ...messages.verifyOk, data });
   } catch (err) {
-    console.log(err);
     throw err;
   }
 };
@@ -86,7 +82,6 @@ export const handleUpdateReview = async (
     if (!data) return res.status(404).send({ ...messages.notFound });
     return res.status(200).send({ ...messages.updateOk, data });
   } catch (err) {
-    console.log(err);
     throw err;
   }
 };
@@ -99,7 +94,6 @@ export const handleDeleteReview = async (
     if (!data) return res.status(404).send({ ...messages.notFound });
     return res.status(200).send({ ...messages.deleteOk, data });
   } catch (err) {
-    console.log(err);
     throw err;
   }
 };

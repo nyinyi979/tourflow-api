@@ -5,6 +5,7 @@ import { activitiesTable } from "../../db/activity";
 import { bookingActivityTable, bookingsTable } from "../../db/booking";
 import { toursTable } from "../../db/tour";
 import { BookingReadRequest, TBooking, UBooking } from "./types";
+import { NotFoundError } from "../../utils/errors";
 
 const bookingWith = {
   customer: true,
@@ -58,7 +59,7 @@ const getItemPrice = async (data: {
 
 export const createBooking = async (customerId: string, data: TBooking) => {
   const item = await getItemPrice(data);
-  if (!item) throw new Error("Booking item not found");
+  if (!item) throw new NotFoundError("Booking item not found");
   const adults = data.adults;
   const children = data.children || 0;
   const totalPrice =
@@ -145,7 +146,7 @@ export const updateBooking = async (id: string, data: UBooking) => {
   let totalPrice = current.totalPrice;
   if (data.adults !== undefined || data.children !== undefined) {
     const item = await getItemPrice(current);
-    if (!item) throw new Error("Booking item not found");
+    if (!item) throw new NotFoundError("Booking item not found");
     const adults = data.adults ?? current.adults;
     const children = data.children ?? current.children;
     totalPrice = item.price * adults + Math.round(item.price * 0.5) * children;

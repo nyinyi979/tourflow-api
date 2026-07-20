@@ -9,7 +9,6 @@ const handleGetDashboard = async (_req, res) => {
         return res.status(200).send({ ...messages_1.messages.verifyOk, ...data });
     }
     catch (err) {
-        console.log(err);
         throw err;
     }
 };

@@ -35,6 +35,7 @@ export default async function authRoutes(app: FastifyInstance) {
       schema: {
         tags: ["Authentication"],
         summary: "List users",
+        security: [{ accessToken: [] }],
         querystring: {
           type: "object",
           required: ["page", "perPage"],
@@ -78,9 +79,11 @@ export default async function authRoutes(app: FastifyInstance) {
   app.put(
     "/",
     {
+      preHandler: authenticateAdmin,
       schema: {
         tags: ["Authentication"],
         summary: "Update a user",
+        security: [{ accessToken: [] }],
         body: {
           type: "object",
           required: ["id"],

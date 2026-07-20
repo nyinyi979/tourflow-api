@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.bookingActivityRelations = exports.bookingsRelations = exports.bookingActivityTable = exports.bookingsTable = exports.bookingStatusEnum = exports.bookingItemTypeEnum = void 0;
 const pg_core_1 = require("drizzle-orm/pg-core");
+const drizzle_orm_1 = require("drizzle-orm");
 const activity_1 = require("./activity");
 const customer_1 = require("./customer");
 const tour_1 = require("./tour");
@@ -83,4 +84,3 @@ exports.bookingActivityRelations = (0, drizzle_orm_1.relations)(exports.bookingA
         references: [exports.bookingsTable.id],
     }),
 }));
-const drizzle_orm_1 = require("drizzle-orm");

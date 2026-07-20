@@ -5,6 +5,7 @@ const auth_1 = require("../../utils/auth");
 const messages_1 = require("../messages");
 const controllers_1 = require("./controllers");
 const utils_1 = require("./utils");
+const errors_1 = require("../../utils/errors");
 const handleCustomerSignup = async (req, res) => {
     let uploadedAvatar = null;
     let customerCreated = false;
@@ -25,7 +26,6 @@ const handleCustomerSignup = async (req, res) => {
         if (!customerCreated) {
             await (0, utils_1.removeCustomerAvatars)([uploadedAvatar]);
         }
-        console.log(err);
         throw err;
     }
 };
@@ -39,7 +39,6 @@ const handleCustomerLogin = async (req, res) => {
         return res.code(200).send({ ...messages_1.messages.verifyOk, ...data });
     }
     catch (err) {
-        console.log(err);
         throw err;
     }
 };
@@ -48,9 +47,7 @@ const handleGetCustomers = async (req, res) => {
     try {
         const params = req.query;
         if (params.page === undefined || params.perPage === undefined) {
-            return res
-                .status(500)
-                .send({ message: "Params page and perPage are required" });
+            return res.status(400).send({ ...messages_1.messages.schemaError });
         }
         const response = await (0, controllers_1.getCustomers)({
             ...params,
@@ -62,7 +59,6 @@ const handleGetCustomers = async (req, res) => {
             .send({ ...messages_1.messages.verifyOk, ...params, ...response });
     }
     catch (err) {
-        console.log(err);
         throw err;
     }
 };
@@ -75,7 +71,6 @@ const handleGetCustomerByToken = async (req, res) => {
         return res.code(200).send({ ...messages_1.messages.verifyOk, data: customer });
     }
     catch (err) {
-        console.log(err);
         throw err;
     }
 };
@@ -92,7 +87,7 @@ const handleUpdateCustomer = async (req, res) => {
         uploadedAvatar = avatarResult.uploadedAvatar;
         const data = await (0, controllers_1.updateCustomer)(customer.id, body);
         if (!data)
-            throw new Error("Customer not found");
+            throw new errors_1.NotFoundError("Customer not found");
         customerUpdated = true;
         const replacedAvatar = body.avatar !== undefined && body.avatar !== customer.avatar
             ? customer.avatar
@@ -104,7 +99,6 @@ const handleUpdateCustomer = async (req, res) => {
         if (!customerUpdated) {
             await (0, utils_1.removeCustomerAvatars)([uploadedAvatar]);
         }
-        console.log(err);
         throw err;
     }
 };
@@ -116,12 +110,11 @@ const handleDeleteCustomer = async (req, res) => {
             return;
         const data = await (0, controllers_1.deleteCustomer)(customer.id);
         if (!data)
-            throw new Error("Customer not found");
+            throw new errors_1.NotFoundError("Customer not found");
         await (0, utils_1.removeCustomerAvatars)([data.avatar]);
         return res.code(200).send({ ...messages_1.messages.deleteOk, data });
     }
     catch (err) {
-        console.log(err);
         throw err;
     }
 };

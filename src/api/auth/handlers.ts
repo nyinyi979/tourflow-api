@@ -1,7 +1,8 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { messages } from "../messages";
-import { TLogin, TUpdate } from "./types";
+import { TLogin, TSignup, TUpdate } from "./types";
 import {
+  signup,
   login,
   getUsers,
   getUserById,
@@ -11,12 +12,21 @@ import {
 import { DeleteRequestByString, PagKeys } from "../types";
 import { authenticate } from "../../utils/auth";
 
+export const handleSignup = async (req: FastifyRequest, res: FastifyReply) => {
+  try {
+    const data = await signup(req.body as TSignup);
+    if (!data) return res.status(409).send({ ...messages.duplicateEmail });
+    return res.status(201).send({ ...messages.createOk, data });
+  } catch (err) {
+    throw err;
+  }
+};
+
 export const handleLogin = async (req: FastifyRequest, res: FastifyReply) => {
   try {
     const data = await login(req.body as TLogin);
     res.code(200).send({ ...messages.verifyOk, ...data });
   } catch (err) {
-    console.log(err);
     throw err;
   }
 };
@@ -27,15 +37,14 @@ export const handleGetUsers = async (
 ) => {
   try {
     const params = req.query as PagKeys;
-    if (!params.page || !params.perPage)
-      res.status(500).send({ message: "Params page and perPage are required" });
+    if (params.page === undefined || params.perPage === undefined)
+      return res.status(400).send({ ...messages.schemaError });
     const response = await getUsers({
       page: +params.page,
       perPage: +params.perPage,
     });
     res.code(200).send({ ...messages.verifyOk, ...response });
   } catch (err) {
-    console.log(err);
     throw err;
   }
 };
@@ -46,11 +55,10 @@ export const handleGetUserById = async (
 ) => {
   try {
     const params = req.params as DeleteRequestByString;
-    if (!params.id) res.status(500).send({ message: "Params ID is required" });
+    if (!params.id) return res.status(400).send({ ...messages.schemaError });
     const response = await getUserById(params.id);
     res.code(200).send({ ...messages.verifyOk, data: response });
   } catch (err) {
-    console.log(err);
     throw err;
   }
 };
@@ -64,7 +72,6 @@ export const handleGetUserByToken = async (
     if (!data) return;
     res.code(200).send({ ...messages.verifyOk, data });
   } catch (err) {
-    console.log(err);
     throw err;
   }
 };
@@ -77,7 +84,6 @@ export const handleUpdateUser = async (
     const data = await updateUser(req.body as TUpdate);
     res.code(200).send({ ...messages.verifyOk, data });
   } catch (err) {
-    console.log(err);
     throw err;
   }
 };
@@ -88,11 +94,10 @@ export const handleDeleteAdmin = async (
 ) => {
   try {
     const params = req.params as DeleteRequestByString;
-    if (!params.id) res.status(500).send({ message: "Params ID is required" });
+    if (!params.id) return res.status(400).send({ ...messages.schemaError });
     const data = await deleteUser(params.id);
     res.code(200).send({ ...messages.verifyOk, data });
   } catch (err) {
-    console.log(err);
     throw err;
   }
 };

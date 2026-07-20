@@ -6,9 +6,13 @@ import {
 } from "../../db/tour";
 import { removeFiles, uploadFile } from "../../utils/file";
 import { TTour, UTour } from "./types";
+import db from "../../db";
+import { BadRequestError, ConflictError } from "../../utils/errors";
+
+type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 export const insertTourChildren = async (
-  tx: any,
+  tx: DbTransaction,
   tourId: string,
   data: TTour | UTour,
 ) => {
@@ -76,15 +80,15 @@ const validateTourChildIds = (
   relationName: string,
 ) => {
   if (new Set(incomingIds).size !== incomingIds.length) {
-    throw new Error(`Duplicate ${relationName} ID`);
+    throw new ConflictError(`Duplicate ${relationName} ID`);
   }
   if (incomingIds.some((id) => !existingIds.includes(id))) {
-    throw new Error(`${relationName} does not belong to this tour`);
+    throw new BadRequestError(`${relationName} does not belong to this tour`);
   }
 };
 
 export const syncTourImages = async (
-  tx: any,
+  tx: DbTransaction,
   tourId: string,
   images: NonNullable<UTour["images"]>,
 ) => {
@@ -95,7 +99,7 @@ export const syncTourImages = async (
   const incomingIds = images.flatMap((image) => (image.id ? [image.id] : []));
   validateTourChildIds(
     incomingIds,
-    existing.map((item: any) => item.id),
+    existing.map((item) => item.id),
     "tour image",
   );
 
@@ -122,7 +126,7 @@ export const syncTourImages = async (
 };
 
 export const syncTourHighlights = async (
-  tx: any,
+  tx: DbTransaction,
   tourId: string,
   highlights: NonNullable<UTour["highlights"]>,
 ) => {
@@ -133,7 +137,7 @@ export const syncTourHighlights = async (
   const incomingIds = highlights.flatMap((item) => (item.id ? [item.id] : []));
   validateTourChildIds(
     incomingIds,
-    existing.map((item: any) => item.id),
+    existing.map((item) => item.id),
     "tour highlight",
   );
   for (const [index, item] of existing.entries())
@@ -160,7 +164,7 @@ export const syncTourHighlights = async (
 };
 
 export const syncTourItinerary = async (
-  tx: any,
+  tx: DbTransaction,
   tourId: string,
   itinerary: NonNullable<UTour["itinerary"]>,
 ) => {
@@ -171,11 +175,11 @@ export const syncTourItinerary = async (
   const incomingIds = itinerary.flatMap((item) => (item.id ? [item.id] : []));
   validateTourChildIds(
     incomingIds,
-    existing.map((item: any) => item.id),
+    existing.map((item) => item.id),
     "itinerary item",
   );
   if (new Set(itinerary.map((item) => item.day)).size !== itinerary.length)
-    throw new Error("Itinerary days must be unique");
+    throw new ConflictError("Itinerary days must be unique");
 
   // Days are temporarily negative for the same reason as ordered positions above.
   for (const [index, item] of existing.entries())

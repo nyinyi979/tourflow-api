@@ -22,9 +22,11 @@ import dashboardRoutes from "./api/dashboard/routes";
 import reviewRoutes from "./api/review/routes";
 import testimonialRoutes from "./api/testimonial/routes";
 import tourRoutes from "./api/tour/routes";
+import { messages } from "./api/messages";
+import { handleApiError } from "./utils/errorHandler";
 
 let cachedApp: FastifyInstance | null = null;
-async function buildApp(): Promise<FastifyInstance> {
+export async function buildApp(): Promise<FastifyInstance> {
   if (cachedApp) return cachedApp;
 
   const app: FastifyInstance = Fastify({ logger: true });
@@ -33,8 +35,8 @@ async function buildApp(): Promise<FastifyInstance> {
     openapi: {
       openapi: "3.0.3",
       info: {
-        title: "Base API Template",
-        description: "API documentation for the Fastify base API template.",
+        title: "TourFlow API",
+        description: "API documentation for TourFlow.",
         version: "1.0.0",
       },
       tags: [
@@ -101,6 +103,11 @@ async function buildApp(): Promise<FastifyInstance> {
   });
   app.register(formBody);
 
+  app.setErrorHandler(handleApiError);
+  app.setNotFoundHandler((_req, res) => {
+    return res.status(404).send({ ...messages.notFound });
+  });
+
   app.get(
     "/api",
     {
@@ -109,12 +116,17 @@ async function buildApp(): Promise<FastifyInstance> {
         summary: "Check whether the API is available",
         response: {
           200: {
-            type: "string",
+            type: "object",
+            properties: {
+              statusCode: { type: "integer" },
+              message: { type: "string" },
+            },
           },
         },
       },
     },
-    (_req, res) => res.send("hello"),
+    (_req, res) =>
+      res.send({ statusCode: 200, message: "TourFlow API is available." }),
   );
   app.register(authRoutes, { prefix: "/api/admin" });
   app.register(customerRoutes, { prefix: "/api/customer" });
@@ -141,7 +153,7 @@ if (require.main === module) {
           app.log.error(err);
           process.exit(1);
         }
-        console.log(`Server listening on ${address}`);
+        app.log.info({ address }, "Server listening");
       },
     ),
   );

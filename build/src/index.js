@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.buildApp = buildApp;
 const cors_1 = __importDefault(require("@fastify/cors"));
 const formbody_1 = __importDefault(require("@fastify/formbody"));
 const helmet_1 = __importDefault(require("@fastify/helmet"));
@@ -23,6 +24,8 @@ const routes_8 = __importDefault(require("./api/dashboard/routes"));
 const routes_9 = __importDefault(require("./api/review/routes"));
 const routes_10 = __importDefault(require("./api/testimonial/routes"));
 const routes_11 = __importDefault(require("./api/tour/routes"));
+const messages_1 = require("./api/messages");
+const errorHandler_1 = require("./utils/errorHandler");
 let cachedApp = null;
 async function buildApp() {
     if (cachedApp)
@@ -32,8 +35,8 @@ async function buildApp() {
         openapi: {
             openapi: "3.0.3",
             info: {
-                title: "Base API Template",
-                description: "API documentation for the Fastify base API template.",
+                title: "TourFlow API",
+                description: "API documentation for TourFlow.",
                 version: "1.0.0",
             },
             tags: [
@@ -96,17 +99,25 @@ async function buildApp() {
         },
     });
     app.register(formbody_1.default);
+    app.setErrorHandler(errorHandler_1.handleApiError);
+    app.setNotFoundHandler((_req, res) => {
+        return res.status(404).send({ ...messages_1.messages.notFound });
+    });
     app.get("/api", {
         schema: {
             tags: ["Health"],
             summary: "Check whether the API is available",
             response: {
                 200: {
-                    type: "string",
+                    type: "object",
+                    properties: {
+                        statusCode: { type: "integer" },
+                        message: { type: "string" },
+                    },
                 },
             },
         },
-    }, (_req, res) => res.send("hello"));
+    }, (_req, res) => res.send({ statusCode: 200, message: "TourFlow API is available." }));
     app.register(routes_1.default, { prefix: "/api/admin" });
     app.register(routes_4.default, { prefix: "/api/customer" });
     app.register(routes_7.default, { prefix: "/api/category" });
@@ -128,7 +139,7 @@ if (require.main === module) {
             app.log.error(err);
             process.exit(1);
         }
-        console.log(`Server listening on ${address}`);
+        app.log.info({ address }, "Server listening");
     }));
 }
 // Vercel handler
