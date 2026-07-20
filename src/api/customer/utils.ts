@@ -1,5 +1,5 @@
 import { removeFiles, uploadFile } from "../../utils/file";
-import { TCustomerSignup, TCustomerUpdate } from "./types";
+import type { TCustomerSignup, TCustomerUpdate } from "./schemas";
 
 export const handleCustomerAvatar = async <
   T extends TCustomerSignup | TCustomerUpdate,

@@ -1,17 +1,17 @@
-import { FastifyInstance } from "fastify";
+import { FastifyPluginAsyncTypebox } from "@fastify/type-provider-typebox";
 import { authenticateAdmin } from "../../utils/auth";
 import { handleGetDashboard } from "./handlers";
-export default async function dashboardRoutes(app: FastifyInstance) {
-  app.get(
-    "",
-    {
-      preHandler: authenticateAdmin,
-      schema: {
-        tags: ["Dashboard"],
-        summary: "Get dashboard statistics",
-        security: [{ accessToken: [] }],
-      },
+
+const dashboardRoutes: FastifyPluginAsyncTypebox = async (app) => {
+  app.get("", {
+    preHandler: authenticateAdmin,
+    schema: {
+      tags: ["Dashboard"],
+      summary: "Get dashboard statistics",
+      security: [{ accessToken: [] }],
     },
-    handleGetDashboard,
-  );
-}
+    handler: handleGetDashboard,
+  });
+};
+
+export default dashboardRoutes;

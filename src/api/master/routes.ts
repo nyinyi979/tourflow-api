@@ -1,52 +1,35 @@
-import { FastifyInstance } from "fastify";
+import { FastifyPluginAsyncTypebox } from "@fastify/type-provider-typebox";
 import {
   handleGetCities,
   handleGetCountries,
   handleGetStates,
 } from "./handlers";
+import { cityQuerySchema, stateQuerySchema } from "./schemas";
 
-export default function masterRoutes(app: FastifyInstance) {
-  app.get(
-    "/countries",
-    {
-      schema: {
-        tags: ["Master Data"],
-        summary: "List countries",
-      },
+const masterRoutes: FastifyPluginAsyncTypebox = async (app) => {
+  app.get("/countries", {
+    schema: {
+      tags: ["Master Data"],
+      summary: "List countries",
     },
-    handleGetCountries,
-  );
-  app.get(
-    "/states",
-    {
-      schema: {
-        tags: ["Master Data"],
-        summary: "List states for a country",
-        querystring: {
-          type: "object",
-          required: ["country"],
-          properties: { country: { type: "string", minLength: 1 } },
-        },
-      },
+    handler: handleGetCountries,
+  });
+  app.get("/states", {
+    schema: {
+      tags: ["Master Data"],
+      summary: "List states for a country",
+      querystring: stateQuerySchema,
     },
-    handleGetStates,
-  );
-  app.get(
-    "/cities",
-    {
-      schema: {
-        tags: ["Master Data"],
-        summary: "List cities for a state",
-        querystring: {
-          type: "object",
-          required: ["country", "state"],
-          properties: {
-            country: { type: "string", minLength: 1 },
-            state: { type: "string", minLength: 1 },
-          },
-        },
-      },
+    handler: handleGetStates,
+  });
+  app.get("/cities", {
+    schema: {
+      tags: ["Master Data"],
+      summary: "List cities for a state",
+      querystring: cityQuerySchema,
     },
-    handleGetCities,
-  );
-}
+    handler: handleGetCities,
+  });
+};
+
+export default masterRoutes;

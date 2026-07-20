@@ -1,37 +1,30 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = masterRoutes;
 const handlers_1 = require("./handlers");
-function masterRoutes(app) {
+const schemas_1 = require("./schemas");
+const masterRoutes = async (app) => {
     app.get("/countries", {
         schema: {
             tags: ["Master Data"],
             summary: "List countries",
         },
-    }, handlers_1.handleGetCountries);
+        handler: handlers_1.handleGetCountries,
+    });
     app.get("/states", {
         schema: {
             tags: ["Master Data"],
             summary: "List states for a country",
-            querystring: {
-                type: "object",
-                required: ["country"],
-                properties: { country: { type: "string", minLength: 1 } },
-            },
+            querystring: schemas_1.stateQuerySchema,
         },
-    }, handlers_1.handleGetStates);
+        handler: handlers_1.handleGetStates,
+    });
     app.get("/cities", {
         schema: {
             tags: ["Master Data"],
             summary: "List cities for a state",
-            querystring: {
-                type: "object",
-                required: ["country", "state"],
-                properties: {
-                    country: { type: "string", minLength: 1 },
-                    state: { type: "string", minLength: 1 },
-                },
-            },
+            querystring: schemas_1.cityQuerySchema,
         },
-    }, handlers_1.handleGetCities);
-}
+        handler: handlers_1.handleGetCities,
+    });
+};
+exports.default = masterRoutes;

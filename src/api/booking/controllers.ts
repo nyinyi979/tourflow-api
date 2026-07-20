@@ -4,7 +4,7 @@ import db from "../../db";
 import { activitiesTable } from "../../db/activity";
 import { bookingActivityTable, bookingsTable } from "../../db/booking";
 import { toursTable } from "../../db/tour";
-import { BookingReadRequest, TBooking, UBooking } from "./types";
+import type { BookingReadRequest, TBooking, UBooking } from "./schemas";
 import { NotFoundError } from "../../utils/errors";
 
 const bookingWith = {

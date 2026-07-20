@@ -29,8 +29,6 @@ exports.handleLogin = handleLogin;
 const handleGetUsers = async (req, res) => {
     try {
         const params = req.query;
-        if (params.page === undefined || params.perPage === undefined)
-            return res.status(400).send({ ...messages_1.messages.schemaError });
         const response = await (0, controllers_1.getUsers)({
             page: +params.page,
             perPage: +params.perPage,
@@ -45,8 +43,6 @@ exports.handleGetUsers = handleGetUsers;
 const handleGetUserById = async (req, res) => {
     try {
         const params = req.params;
-        if (!params.id)
-            return res.status(400).send({ ...messages_1.messages.schemaError });
         const response = await (0, controllers_1.getUserById)(params.id);
         res.code(200).send({ ...messages_1.messages.verifyOk, data: response });
     }
@@ -80,8 +76,6 @@ exports.handleUpdateUser = handleUpdateUser;
 const handleDeleteAdmin = async (req, res) => {
     try {
         const params = req.params;
-        if (!params.id)
-            return res.status(400).send({ ...messages_1.messages.schemaError });
         const data = await (0, controllers_1.deleteUser)(params.id);
         res.code(200).send({ ...messages_1.messages.verifyOk, data });
     }

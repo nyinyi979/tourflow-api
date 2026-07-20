@@ -1,7 +1,6 @@
 import bcrypt from "bcrypt";
 import db from "../../db";
-import { TLogin, TSignup, TUpdate } from "./types";
-import { PagKeys } from "../types";
+import type { TLogin, TSignup, TUpdate, UserReadRequest } from "./schemas";
 import { sign, verify } from "jsonwebtoken";
 import { usersTable } from "../../db/user";
 import { eq } from "drizzle-orm";
@@ -64,7 +63,7 @@ export const login = async (data: TLogin) => {
   return { user: safeUser, token };
 };
 
-export const getUsers = async ({ page, perPage }: PagKeys) => {
+export const getUsers = async ({ page, perPage }: UserReadRequest) => {
   return await db.transaction(async (tx) => {
     const data = await tx.query.usersTable.findMany({
       limit: perPage,

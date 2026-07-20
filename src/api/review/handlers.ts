@@ -1,7 +1,6 @@
-import { FastifyReply, FastifyRequest } from "fastify";
+import { FastifyReply } from "fastify";
 import { authenticateCustomer } from "../../utils/auth";
 import { messages } from "../messages";
-import { DeleteRequestByString } from "../types";
 import {
   createReview,
   getReviewById,
@@ -9,16 +8,22 @@ import {
   updateReview,
   deleteReview,
 } from "./controllers";
-import { ReviewReadRequest, TReview, UReview } from "./types";
+import { TypeBoxRequest } from "../request";
+import { idParamsSchema } from "../schemas";
+import {
+  createReviewBodySchema,
+  reviewQuerySchema,
+  updateReviewBodySchema,
+} from "./schemas";
 
 export const handleCreateReview = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ body: typeof createReviewBodySchema }>,
   res: FastifyReply,
 ) => {
   try {
     const customer = await authenticateCustomer(req, res);
     if (!customer) return;
-    const data = await createReview(customer, req.body as TReview);
+    const data = await createReview(customer, req.body);
     return res.status(201).send({ ...messages.createOk, data });
   } catch (err) {
     throw err;
@@ -26,11 +31,11 @@ export const handleCreateReview = async (
 };
 
 export const handleGetPublishedReviews = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ querystring: typeof reviewQuerySchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const params = req.query as ReviewReadRequest;
+    const params = req.query;
     const response = await getReviews(
       { ...params, page: +params.page, perPage: +params.perPage },
       true,
@@ -43,11 +48,11 @@ export const handleGetPublishedReviews = async (
   }
 };
 export const handleGetAdminReviews = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ querystring: typeof reviewQuerySchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const params = req.query as ReviewReadRequest;
+    const params = req.query;
     const response = await getReviews({
       ...params,
       page: +params.page,
@@ -61,11 +66,11 @@ export const handleGetAdminReviews = async (
   }
 };
 export const handleGetReviewById = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ params: typeof idParamsSchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const data = await getReviewById((req.params as DeleteRequestByString).id);
+    const data = await getReviewById(req.params.id);
     if (!data || data.status !== "published")
       return res.status(404).send({ ...messages.notFound });
     return res.status(200).send({ ...messages.verifyOk, data });
@@ -74,11 +79,11 @@ export const handleGetReviewById = async (
   }
 };
 export const handleUpdateReview = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ body: typeof updateReviewBodySchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const data = await updateReview(req.body as UReview);
+    const data = await updateReview(req.body);
     if (!data) return res.status(404).send({ ...messages.notFound });
     return res.status(200).send({ ...messages.updateOk, data });
   } catch (err) {
@@ -86,11 +91,11 @@ export const handleUpdateReview = async (
   }
 };
 export const handleDeleteReview = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ params: typeof idParamsSchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const data = await deleteReview((req.params as DeleteRequestByString).id);
+    const data = await deleteReview(req.params.id);
     if (!data) return res.status(404).send({ ...messages.notFound });
     return res.status(200).send({ ...messages.deleteOk, data });
   } catch (err) {

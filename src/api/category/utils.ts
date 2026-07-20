@@ -1,5 +1,5 @@
 import { removeFiles, uploadFile } from "../../utils/file";
-import { TCategory, UCategory } from "./types";
+import type { TCategory, UCategory } from "./schemas";
 
 export const handleCategoryImage = async <T extends TCategory | UCategory>(
   body: T,

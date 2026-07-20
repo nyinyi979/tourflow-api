@@ -1,11 +1,6 @@
-import { FastifyReply, FastifyRequest } from "fastify";
-import {
-  authenticateAdmin,
-  authenticateCustomer,
-  authenticateUser,
-} from "../../utils/auth";
+import { FastifyReply } from "fastify";
+import { authenticateCustomer, authenticateUser } from "../../utils/auth";
 import { messages } from "../messages";
-import { DeleteRequestByString } from "../types";
 import {
   createBooking,
   getBookingById,
@@ -13,16 +8,22 @@ import {
   updateBooking,
   deleteBooking,
 } from "./controllers";
-import { BookingReadRequest, TBooking, UBooking } from "./types";
+import { TypeBoxRequest } from "../request";
+import { idParamsSchema } from "../schemas";
+import {
+  bookingQuerySchema,
+  createBookingBodySchema,
+  updateBookingBodySchema,
+} from "./schemas";
 
 export const handleCreateBooking = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ body: typeof createBookingBodySchema }>,
   res: FastifyReply,
 ) => {
   try {
     const customer = await authenticateCustomer(req, res);
     if (!customer) return;
-    const data = await createBooking(customer.id, req.body as TBooking);
+    const data = await createBooking(customer.id, req.body);
     return res.status(201).send({ ...messages.createOk, data });
   } catch (err) {
     throw err;
@@ -30,11 +31,11 @@ export const handleCreateBooking = async (
 };
 
 export const handleGetBookings = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ querystring: typeof bookingQuerySchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const params = req.query as BookingReadRequest;
+    const params = req.query;
     const response = await getBookings({
       ...params,
       page: +params.page,
@@ -48,13 +49,13 @@ export const handleGetBookings = async (
   }
 };
 export const handleGetMyBookings = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ querystring: typeof bookingQuerySchema }>,
   res: FastifyReply,
 ) => {
   try {
     const customer = await authenticateCustomer(req, res);
     if (!customer) return;
-    const params = req.query as BookingReadRequest;
+    const params = req.query;
     const response = await getBookings(
       { ...params, page: +params.page, perPage: +params.perPage },
       customer.id,
@@ -67,13 +68,13 @@ export const handleGetMyBookings = async (
   }
 };
 export const handleGetBookingById = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ params: typeof idParamsSchema }>,
   res: FastifyReply,
 ) => {
   try {
     const user = await authenticateUser(req, res);
     if (!user) return;
-    const data = await getBookingById((req.params as DeleteRequestByString).id);
+    const data = await getBookingById(req.params.id);
     if (!data) return res.status(404).send({ ...messages.notFound });
     if (user.accountType === "customer" && data.customerId !== user.id)
       return res.status(403).send({ ...messages.forbiddenAccess });
@@ -83,16 +84,19 @@ export const handleGetBookingById = async (
   }
 };
 export const handleUpdateBooking = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{
+    params: typeof idParamsSchema;
+    body: typeof updateBookingBodySchema;
+  }>,
   res: FastifyReply,
 ) => {
   try {
     const user = await authenticateUser(req, res);
     if (!user) return;
-    const id = (req.params as DeleteRequestByString).id;
+    const id = req.params.id;
     const current = await getBookingById(id);
     if (!current) return res.status(404).send({ ...messages.notFound });
-    const body = req.body as UBooking;
+    const body = req.body;
     if (
       user.accountType === "customer" &&
       (current.customerId !== user.id ||
@@ -106,13 +110,13 @@ export const handleUpdateBooking = async (
   }
 };
 export const handleDeleteBooking = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ params: typeof idParamsSchema }>,
   res: FastifyReply,
 ) => {
   try {
     const user = await authenticateUser(req, res);
     if (!user) return;
-    const id = (req.params as DeleteRequestByString).id;
+    const id = req.params.id;
     const current = await getBookingById(id);
     if (!current) return res.status(404).send({ ...messages.notFound });
     if (user.accountType === "customer" && current.customerId !== user.id)

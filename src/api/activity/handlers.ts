@@ -1,6 +1,5 @@
-import { FastifyReply, FastifyRequest } from "fastify";
+import { FastifyReply } from "fastify";
 import { messages } from "../messages";
-import { DeleteRequestByString } from "../types";
 import {
   createActivity,
   getActivities,
@@ -8,17 +7,23 @@ import {
   updateActivity,
   deleteActivity,
 } from "./controllers";
-import { ActivityReadRequest, TActivity, UActivity } from "./types";
 import { handleActivityImages, removeActivityImages } from "./utils";
+import { TypeBoxRequest } from "../request";
+import { idParamsSchema } from "../schemas";
+import {
+  activityQuerySchema,
+  createActivityBodySchema,
+  updateActivityBodySchema,
+} from "./schemas";
 
 export const handleCreateActivity = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ body: typeof createActivityBodySchema }>,
   res: FastifyReply,
 ) => {
   let uploaded: string[] = [];
   let saved = false;
   try {
-    const result = await handleActivityImages(req.body as TActivity);
+    const result = await handleActivityImages(req.body);
     uploaded = result.uploadedImages;
     const data = await createActivity(result.body);
     if (!data) throw new Error("Activity was not created");
@@ -32,11 +37,11 @@ export const handleCreateActivity = async (
 };
 
 export const handleGetActivities = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ querystring: typeof activityQuerySchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const params = req.query as ActivityReadRequest;
+    const params = req.query;
     const response = await getActivities({
       ...params,
       page: +params.page,
@@ -50,13 +55,11 @@ export const handleGetActivities = async (
   }
 };
 export const handleGetActivityById = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ params: typeof idParamsSchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const data = await getActivityById(
-      (req.params as DeleteRequestByString).id,
-    );
+    const data = await getActivityById(req.params.id);
     if (!data) return res.status(404).send({ ...messages.notFound });
     return res.status(200).send({ ...messages.verifyOk, data });
   } catch (err) {
@@ -64,13 +67,13 @@ export const handleGetActivityById = async (
   }
 };
 export const handleUpdateActivity = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ body: typeof updateActivityBodySchema }>,
   res: FastifyReply,
 ) => {
   let uploaded: string[] = [];
   let saved = false;
   try {
-    const body = req.body as UActivity;
+    const body = req.body;
     const previous = await getActivityById(body.id);
     if (!previous) return res.status(404).send({ ...messages.notFound });
     const result = await handleActivityImages(body);
@@ -101,11 +104,11 @@ export const handleUpdateActivity = async (
   }
 };
 export const handleDeleteActivity = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ params: typeof idParamsSchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const data = await deleteActivity((req.params as DeleteRequestByString).id);
+    const data = await deleteActivity(req.params.id);
     if (!data) return res.status(404).send({ ...messages.notFound });
     await removeActivityImages(
       data.images.map((image: { url: string }) => image.url),

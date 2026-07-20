@@ -1,63 +1,43 @@
-import { FastifyInstance } from "fastify";
+import { FastifyPluginAsyncTypebox } from "@fastify/type-provider-typebox";
 import { authenticateAdmin } from "../../utils/auth";
 import {
-  handleCustomerSignup,
   handleCustomerLogin,
-  handleGetCustomers,
-  handleGetCustomerByToken,
-  handleUpdateCustomer,
+  handleCustomerSignup,
   handleDeleteCustomer,
+  handleGetCustomerByToken,
+  handleGetCustomers,
+  handleUpdateCustomer,
 } from "./handlers";
+import {
+  customerLoginBodySchema,
+  customerQuerySchema,
+  customerSignupBodySchema,
+  customerUpdateBodySchema,
+} from "./schemas";
 
-const customerBodyProperties = {
-  name: { type: "string", minLength: 1, maxLength: 150 },
-  email: { type: "string", format: "email", maxLength: 255 },
-  password: { type: "string", minLength: 8, maxLength: 255 },
-  avatar: {
-    anyOf: [{ type: "string", maxLength: 2048 }, { type: "null" }],
-  },
-  removedImageUrls: {
-    type: "array",
-    items: { anyOf: [{ type: "string" }, { type: "null" }] },
-  },
-};
-
-export default async function customerRoutes(app: FastifyInstance) {
+const customerRoutes: FastifyPluginAsyncTypebox = async (app) => {
   app.post(
     "/signup",
     {
       schema: {
         tags: ["Customers"],
         summary: "Create a customer account",
-        body: {
-          type: "object",
-          required: ["name", "email", "password"],
-          properties: customerBodyProperties,
-        },
+        body: customerSignupBodySchema,
       },
     },
     handleCustomerSignup,
   );
-
   app.post(
     "/login",
     {
       schema: {
         tags: ["Customers"],
         summary: "Log in to a customer account",
-        body: {
-          type: "object",
-          required: ["email", "password"],
-          properties: {
-            email: customerBodyProperties.email,
-            password: { type: "string", minLength: 1, maxLength: 255 },
-          },
-        },
+        body: customerLoginBodySchema,
       },
     },
     handleCustomerLogin,
   );
-
   app.get(
     "",
     {
@@ -66,25 +46,11 @@ export default async function customerRoutes(app: FastifyInstance) {
         tags: ["Customers"],
         summary: "List customers",
         security: [{ accessToken: [] }],
-        querystring: {
-          type: "object",
-          required: ["page", "perPage"],
-          properties: {
-            page: { type: "integer", minimum: 0 },
-            perPage: { type: "integer", minimum: 1, maximum: 100 },
-            query: { type: "string" },
-            sortBy: {
-              type: "string",
-              enum: ["name", "email", "registeredAt", "createdAt", "updatedAt"],
-            },
-            orderBy: { type: "string", enum: ["asc", "desc"] },
-          },
-        },
+        querystring: customerQuerySchema,
       },
     },
     handleGetCustomers,
   );
-
   app.get(
     "/me",
     {
@@ -96,7 +62,6 @@ export default async function customerRoutes(app: FastifyInstance) {
     },
     handleGetCustomerByToken,
   );
-
   app.put(
     "/me",
     {
@@ -104,16 +69,11 @@ export default async function customerRoutes(app: FastifyInstance) {
         tags: ["Customers"],
         summary: "Update the current customer",
         security: [{ accessToken: [] }],
-        body: {
-          type: "object",
-          minProperties: 1,
-          properties: customerBodyProperties,
-        },
+        body: customerUpdateBodySchema,
       },
     },
     handleUpdateCustomer,
   );
-
   app.delete(
     "/me",
     {
@@ -125,4 +85,6 @@ export default async function customerRoutes(app: FastifyInstance) {
     },
     handleDeleteCustomer,
   );
-}
+};
+
+export default customerRoutes;

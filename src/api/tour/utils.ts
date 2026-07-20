@@ -5,7 +5,7 @@ import {
   tourItineraryTable,
 } from "../../db/tour";
 import { removeFiles, uploadFile } from "../../utils/file";
-import { TTour, UTour } from "./types";
+import type { TTour, UTour } from "./schemas";
 import db from "../../db";
 import { BadRequestError, ConflictError } from "../../utils/errors";
 

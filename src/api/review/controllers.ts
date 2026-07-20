@@ -2,7 +2,7 @@ import { and, asc, desc, eq, ilike } from "drizzle-orm";
 import db from "../../db";
 import { reviewsTable } from "../../db/review";
 import { toursTable } from "../../db/tour";
-import { ReviewReadRequest, TReview, UReview } from "./types";
+import type { ReviewReadRequest, TReview, UReview } from "./schemas";
 const reviewWith = { tour: { columns: { id: true, title: true } } } as const;
 const mapReview = (row: any) => ({
   id: row.id,

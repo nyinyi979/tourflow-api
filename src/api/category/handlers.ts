@@ -1,6 +1,5 @@
-import { FastifyReply, FastifyRequest } from "fastify";
+import { FastifyReply } from "fastify";
 import { messages } from "../messages";
-import { DeleteRequestByString } from "../types";
 import {
   createCategory,
   getAllCategories,
@@ -9,22 +8,24 @@ import {
   updateCategory,
   deleteCategory,
 } from "./controllers";
-import {
-  AllCategoryReadRequest,
-  CategoryReadRequest,
-  TCategory,
-  UCategory,
-} from "./types";
 import { handleCategoryImage, removeCategoryImages } from "./utils";
+import { TypeBoxRequest } from "../request";
+import { idParamsSchema } from "../schemas";
+import {
+  allCategoryQuerySchema,
+  categoryQuerySchema,
+  createCategoryBodySchema,
+  updateCategoryBodySchema,
+} from "./schemas";
 
 export const handleCreateCategory = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ body: typeof createCategoryBodySchema }>,
   res: FastifyReply,
 ) => {
   let uploadedImage: string | null = null;
   let created = false;
   try {
-    const result = await handleCategoryImage(req.body as TCategory);
+    const result = await handleCategoryImage(req.body);
     uploadedImage = result.uploadedImage;
     const data = await createCategory(result.body);
     created = true;
@@ -37,11 +38,11 @@ export const handleCreateCategory = async (
 };
 
 export const handleGetCategories = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ querystring: typeof categoryQuerySchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const params = req.query as CategoryReadRequest;
+    const params = req.query;
     const response = await getCategories({
       ...params,
       page: +params.page,
@@ -56,11 +57,11 @@ export const handleGetCategories = async (
 };
 
 export const handleGetAllCategories = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ querystring: typeof allCategoryQuerySchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const params = req.query as AllCategoryReadRequest;
+    const params = req.query;
     const response = await getAllCategories(params.type);
     return res.status(200).send({ ...messages.verifyOk, data: response });
   } catch (err) {
@@ -69,11 +70,11 @@ export const handleGetAllCategories = async (
 };
 
 export const handleGetCategoryById = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ params: typeof idParamsSchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const { id } = req.params as DeleteRequestByString;
+    const { id } = req.params;
     const data = await getCategoryById(id);
     if (!data) return res.status(404).send({ ...messages.notFound });
     return res.status(200).send({ ...messages.verifyOk, data });
@@ -83,13 +84,13 @@ export const handleGetCategoryById = async (
 };
 
 export const handleUpdateCategory = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ body: typeof updateCategoryBodySchema }>,
   res: FastifyReply,
 ) => {
   let uploadedImage: string | null = null;
   let updated = false;
   try {
-    const body = req.body as UCategory;
+    const body = req.body;
     const previous = await getCategoryById(body.id);
     if (!previous) return res.status(404).send({ ...messages.notFound });
     const result = await handleCategoryImage(body);
@@ -113,11 +114,11 @@ export const handleUpdateCategory = async (
 };
 
 export const handleDeleteCategory = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ params: typeof idParamsSchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const { id } = req.params as DeleteRequestByString;
+    const { id } = req.params;
     const data = await deleteCategory(id);
     if (!data) return res.status(404).send({ ...messages.notFound });
     await removeCategoryImages([data.image]);

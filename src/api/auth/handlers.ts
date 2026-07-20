@@ -1,6 +1,5 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { messages } from "../messages";
-import { TLogin, TSignup, TUpdate } from "./types";
 import {
   signup,
   login,
@@ -9,12 +8,21 @@ import {
   updateUser,
   deleteUser,
 } from "./controllers";
-import { DeleteRequestByString, PagKeys } from "../types";
 import { authenticate } from "../../utils/auth";
+import { TypeBoxRequest } from "../request";
+import {
+  loginBodySchema,
+  signupBodySchema,
+  updateUserBodySchema,
+} from "./schemas";
+import { idParamsSchema, paginationQuerySchema } from "../schemas";
 
-export const handleSignup = async (req: FastifyRequest, res: FastifyReply) => {
+export const handleSignup = async (
+  req: TypeBoxRequest<{ body: typeof signupBodySchema }>,
+  res: FastifyReply,
+) => {
   try {
-    const data = await signup(req.body as TSignup);
+    const data = await signup(req.body);
     if (!data) return res.status(409).send({ ...messages.duplicateEmail });
     return res.status(201).send({ ...messages.createOk, data });
   } catch (err) {
@@ -22,9 +30,12 @@ export const handleSignup = async (req: FastifyRequest, res: FastifyReply) => {
   }
 };
 
-export const handleLogin = async (req: FastifyRequest, res: FastifyReply) => {
+export const handleLogin = async (
+  req: TypeBoxRequest<{ body: typeof loginBodySchema }>,
+  res: FastifyReply,
+) => {
   try {
-    const data = await login(req.body as TLogin);
+    const data = await login(req.body);
     res.code(200).send({ ...messages.verifyOk, ...data });
   } catch (err) {
     throw err;
@@ -32,13 +43,11 @@ export const handleLogin = async (req: FastifyRequest, res: FastifyReply) => {
 };
 
 export const handleGetUsers = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ querystring: typeof paginationQuerySchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const params = req.query as PagKeys;
-    if (params.page === undefined || params.perPage === undefined)
-      return res.status(400).send({ ...messages.schemaError });
+    const params = req.query;
     const response = await getUsers({
       page: +params.page,
       perPage: +params.perPage,
@@ -50,12 +59,11 @@ export const handleGetUsers = async (
 };
 
 export const handleGetUserById = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ params: typeof idParamsSchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const params = req.params as DeleteRequestByString;
-    if (!params.id) return res.status(400).send({ ...messages.schemaError });
+    const params = req.params;
     const response = await getUserById(params.id);
     res.code(200).send({ ...messages.verifyOk, data: response });
   } catch (err) {
@@ -77,11 +85,11 @@ export const handleGetUserByToken = async (
 };
 
 export const handleUpdateUser = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ body: typeof updateUserBodySchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const data = await updateUser(req.body as TUpdate);
+    const data = await updateUser(req.body);
     res.code(200).send({ ...messages.verifyOk, data });
   } catch (err) {
     throw err;
@@ -89,12 +97,11 @@ export const handleUpdateUser = async (
 };
 
 export const handleDeleteAdmin = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ params: typeof idParamsSchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const params = req.params as DeleteRequestByString;
-    if (!params.id) return res.status(400).send({ ...messages.schemaError });
+    const params = req.params;
     const data = await deleteUser(params.id);
     res.code(200).send({ ...messages.verifyOk, data });
   } catch (err) {

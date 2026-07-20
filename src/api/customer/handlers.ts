@@ -8,26 +8,25 @@ import {
   updateCustomer,
   deleteCustomer,
 } from "./controllers";
-import {
-  CustomerReadRequest,
-  TCustomerLogin,
-  TCustomerSignup,
-  TCustomerUpdate,
-} from "./types";
 import { handleCustomerAvatar, removeCustomerAvatars } from "./utils";
 import { NotFoundError } from "../../utils/errors";
+import { TypeBoxRequest } from "../request";
+import {
+  customerLoginBodySchema,
+  customerQuerySchema,
+  customerSignupBodySchema,
+  customerUpdateBodySchema,
+} from "./schemas";
 
 export const handleCustomerSignup = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ body: typeof customerSignupBodySchema }>,
   res: FastifyReply,
 ) => {
   let uploadedAvatar: string | null = null;
   let customerCreated = false;
 
   try {
-    const avatarResult = await handleCustomerAvatar(
-      req.body as TCustomerSignup,
-    );
+    const avatarResult = await handleCustomerAvatar(req.body);
     const { body } = avatarResult;
     uploadedAvatar = avatarResult.uploadedAvatar;
 
@@ -50,11 +49,11 @@ export const handleCustomerSignup = async (
 };
 
 export const handleCustomerLogin = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ body: typeof customerLoginBodySchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const data = await loginCustomer(req.body as TCustomerLogin);
+    const data = await loginCustomer(req.body);
     if (!data) {
       return res.code(401).send({ ...messages.loginError });
     }
@@ -65,20 +64,17 @@ export const handleCustomerLogin = async (
 };
 
 export const handleGetCustomers = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ querystring: typeof customerQuerySchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const params = req.query as CustomerReadRequest;
-    if (params.page === undefined || params.perPage === undefined) {
-      return res.status(400).send({ ...messages.schemaError });
-    }
+    const params = req.query;
 
     const response = await getCustomers({
       ...params,
       page: +params.page,
       perPage: +params.perPage,
-    } as CustomerReadRequest);
+    });
 
     return res
       .status(200)
@@ -102,7 +98,7 @@ export const handleGetCustomerByToken = async (
 };
 
 export const handleUpdateCustomer = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ body: typeof customerUpdateBodySchema }>,
   res: FastifyReply,
 ) => {
   let uploadedAvatar: string | null = null;
@@ -112,9 +108,7 @@ export const handleUpdateCustomer = async (
     const customer = await authenticateCustomer(req, res);
     if (!customer) return;
 
-    const avatarResult = await handleCustomerAvatar(
-      req.body as TCustomerUpdate,
-    );
+    const avatarResult = await handleCustomerAvatar(req.body);
     const { body } = avatarResult;
     uploadedAvatar = avatarResult.uploadedAvatar;
 

@@ -1,6 +1,5 @@
-import { FastifyReply, FastifyRequest } from "fastify";
+import { FastifyReply } from "fastify";
 import { messages } from "../messages";
-import { DeleteRequestByString } from "../types";
 import {
   createTour,
   getTourById,
@@ -8,17 +7,23 @@ import {
   updateTour,
   deleteTour,
 } from "./controllers";
-import { TourReadRequest, TTour, UTour } from "./types";
 import { handleTourImages, removeTourImages } from "./utils";
+import { TypeBoxRequest } from "../request";
+import { idParamsSchema } from "../schemas";
+import {
+  createTourBodySchema,
+  tourQuerySchema,
+  updateTourBodySchema,
+} from "./schemas";
 
 export const handleCreateTour = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ body: typeof createTourBodySchema }>,
   res: FastifyReply,
 ) => {
   let uploaded: string[] = [];
   let saved = false;
   try {
-    const result = await handleTourImages(req.body as TTour);
+    const result = await handleTourImages(req.body);
     uploaded = result.uploadedImages;
     const data = await createTour(result.body);
     if (!data) throw new Error("Tour was not created");
@@ -32,11 +37,11 @@ export const handleCreateTour = async (
 };
 
 export const handleGetTours = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ querystring: typeof tourQuerySchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const params = req.query as TourReadRequest;
+    const params = req.query;
     const response = await getTours({
       ...params,
       page: +params.page,
@@ -51,11 +56,11 @@ export const handleGetTours = async (
 };
 
 export const handleGetTourById = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ params: typeof idParamsSchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const data = await getTourById((req.params as DeleteRequestByString).id);
+    const data = await getTourById(req.params.id);
     if (!data) return res.status(404).send({ ...messages.notFound });
     return res.status(200).send({ ...messages.verifyOk, data });
   } catch (err) {
@@ -64,13 +69,13 @@ export const handleGetTourById = async (
 };
 
 export const handleUpdateTour = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ body: typeof updateTourBodySchema }>,
   res: FastifyReply,
 ) => {
   let uploaded: string[] = [];
   let saved = false;
   try {
-    const body = req.body as UTour;
+    const body = req.body;
     const previous = await getTourById(body.id);
     if (!previous) return res.status(404).send({ ...messages.notFound });
     const result = await handleTourImages(body);
@@ -102,11 +107,11 @@ export const handleUpdateTour = async (
 };
 
 export const handleDeleteTour = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ params: typeof idParamsSchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const data = await deleteTour((req.params as DeleteRequestByString).id);
+    const data = await deleteTour(req.params.id);
     if (!data) return res.status(404).send({ ...messages.notFound });
     await removeTourImages(
       data.images.map((image: { url: string }) => image.url),

@@ -1,6 +1,5 @@
-import { FastifyReply, FastifyRequest } from "fastify";
+import { FastifyReply } from "fastify";
 import { messages } from "../messages";
-import { DeleteRequestByString } from "../types";
 import {
   createTestimonial,
   getTestimonialById,
@@ -8,17 +7,23 @@ import {
   updateTestimonial,
   deleteTestimonial,
 } from "./controllers";
-import { TestimonialReadRequest, TTestimonial, UTestimonial } from "./types";
 import { handleTestimonialAvatar, removeTestimonialAvatars } from "./utils";
+import { TypeBoxRequest } from "../request";
+import { idParamsSchema } from "../schemas";
+import {
+  createTestimonialBodySchema,
+  testimonialQuerySchema,
+  updateTestimonialBodySchema,
+} from "./schemas";
 
 export const handleCreateTestimonial = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ body: typeof createTestimonialBodySchema }>,
   res: FastifyReply,
 ) => {
   let uploaded: string | null = null;
   let saved = false;
   try {
-    const result = await handleTestimonialAvatar(req.body as TTestimonial);
+    const result = await handleTestimonialAvatar(req.body);
     uploaded = result.uploadedAvatar;
     const data = await createTestimonial(result.body);
     saved = true;
@@ -31,11 +36,11 @@ export const handleCreateTestimonial = async (
 };
 
 export const handleGetTestimonials = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ querystring: typeof testimonialQuerySchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const params = req.query as TestimonialReadRequest;
+    const params = req.query;
     const response = await getTestimonials({
       ...params,
       page: +params.page,
@@ -49,13 +54,11 @@ export const handleGetTestimonials = async (
   }
 };
 export const handleGetTestimonialById = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ params: typeof idParamsSchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const data = await getTestimonialById(
-      (req.params as DeleteRequestByString).id,
-    );
+    const data = await getTestimonialById(req.params.id);
     if (!data) return res.status(404).send({ ...messages.notFound });
     return res.status(200).send({ ...messages.verifyOk, data });
   } catch (err) {
@@ -63,13 +66,13 @@ export const handleGetTestimonialById = async (
   }
 };
 export const handleUpdateTestimonial = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ body: typeof updateTestimonialBodySchema }>,
   res: FastifyReply,
 ) => {
   let uploaded: string | null = null;
   let saved = false;
   try {
-    const body = req.body as UTestimonial;
+    const body = req.body;
     const previous = await getTestimonialById(body.id);
     if (!previous) return res.status(404).send({ ...messages.notFound });
     const result = await handleTestimonialAvatar(body);
@@ -92,13 +95,11 @@ export const handleUpdateTestimonial = async (
   }
 };
 export const handleDeleteTestimonial = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ params: typeof idParamsSchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const data = await deleteTestimonial(
-      (req.params as DeleteRequestByString).id,
-    );
+    const data = await deleteTestimonial(req.params.id);
     if (!data) return res.status(404).send({ ...messages.notFound });
     await removeTestimonialAvatars([data.avatar]);
     return res.status(200).send({ ...messages.deleteOk, data });

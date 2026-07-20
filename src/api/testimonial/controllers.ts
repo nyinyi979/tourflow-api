@@ -1,7 +1,11 @@
 import { asc, desc, eq, ilike } from "drizzle-orm";
 import db from "../../db";
 import { testimonialsTable } from "../../db/testimonial";
-import { TestimonialReadRequest, TTestimonial, UTestimonial } from "./types";
+import type {
+  TestimonialReadRequest,
+  TTestimonial,
+  UTestimonial,
+} from "./schemas";
 
 export const createTestimonial = async (data: TTestimonial) => {
   const rows = await db

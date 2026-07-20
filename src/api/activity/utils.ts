@@ -5,7 +5,7 @@ import {
   activityIncludedItemsTable,
 } from "../../db/activity";
 import { removeFiles, uploadFile } from "../../utils/file";
-import { TActivity, UActivity } from "./types";
+import type { TActivity, UActivity } from "./schemas";
 import db from "../../db";
 import { BadRequestError, ConflictError } from "../../utils/errors";
 

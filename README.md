@@ -1,7 +1,24 @@
-# API Template
+# TourFlow API
 
-Fastify API template with Drizzle ORM, PostgreSQL, JWT authentication, AWS S3,
-and OpenAPI documentation.
+Fastify API for TourFlow with Drizzle ORM, PostgreSQL, JWT authentication, AWS
+S3, TypeBox request validation, and OpenAPI documentation.
+
+## Feature structure
+
+Each API feature keeps its HTTP and database responsibilities separate:
+
+```text
+src/api/tour/
+├── controllers.ts  # Database and business operations
+├── handlers.ts     # HTTP request and response handling
+├── routes.ts       # Route registration and documentation
+├── schemas.ts      # TypeBox validation and inferred request types
+└── utils.ts        # Tour-specific processing and relationship syncing
+```
+
+TypeBox schemas are the source of truth for request validation, Swagger JSON
+Schema, and TypeScript request types. Request interfaces should not be written
+separately from their runtime schemas.
 
 ## Getting started
 

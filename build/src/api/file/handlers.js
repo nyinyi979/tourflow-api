@@ -81,7 +81,7 @@ const handleRemoveFile = async (req, res) => {
     }
 };
 exports.handleRemoveFile = handleRemoveFile;
-const handleDuplicateFile = async (req, res) => {
+const handleDuplicateFile = async (req, _res) => {
     const url = req.query;
     const result = await (0, file_1.duplicateFileS3)(url.url);
     return result;

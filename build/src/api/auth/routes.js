@@ -1,21 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = authRoutes;
-const handlers_1 = require("./handlers");
 const auth_1 = require("../../utils/auth");
-async function authRoutes(app) {
+const handlers_1 = require("./handlers");
+const schemas_1 = require("./schemas");
+const schemas_2 = require("../schemas");
+const authRoutes = async (app) => {
     app.post("/login", {
         schema: {
             tags: ["Authentication"],
             summary: "Log in",
-            body: {
-                type: "object",
-                required: ["email", "password"],
-                properties: {
-                    email: { type: "string", format: "email" },
-                    password: { type: "string", minLength: 1 },
-                },
-            },
+            body: schemas_1.loginBodySchema,
         },
     }, handlers_1.handleLogin);
     app.get("", {
@@ -24,14 +18,7 @@ async function authRoutes(app) {
             tags: ["Authentication"],
             summary: "List users",
             security: [{ accessToken: [] }],
-            querystring: {
-                type: "object",
-                required: ["page", "perPage"],
-                properties: {
-                    page: { type: "integer", minimum: 0 },
-                    perPage: { type: "integer", minimum: 1, maximum: 100 },
-                },
-            },
+            querystring: schemas_2.paginationQuerySchema,
         },
     }, handlers_1.handleGetUsers);
     app.get("/:id", {
@@ -40,11 +27,7 @@ async function authRoutes(app) {
             tags: ["Authentication"],
             summary: "Get a user by ID",
             security: [{ accessToken: [] }],
-            params: {
-                type: "object",
-                required: ["id"],
-                properties: { id: { type: "string", format: "uuid" } },
-            },
+            params: schemas_2.idParamsSchema,
         },
     }, handlers_1.handleGetUserById);
     app.post("/me", {
@@ -60,22 +43,7 @@ async function authRoutes(app) {
             tags: ["Authentication"],
             summary: "Update a user",
             security: [{ accessToken: [] }],
-            body: {
-                type: "object",
-                required: ["id"],
-                properties: {
-                    id: { type: "string", format: "uuid" },
-                    username: { type: "string", minLength: 1, maxLength: 100 },
-                    email: { type: "string", format: "email", maxLength: 100 },
-                    password: {
-                        anyOf: [
-                            { type: "string", minLength: 8, maxLength: 255 },
-                            { type: "null" },
-                        ],
-                    },
-                    role: { type: "integer" },
-                },
-            },
+            body: schemas_1.updateUserBodySchema,
         },
     }, handlers_1.handleUpdateUser);
     app.delete("/:id", {
@@ -84,11 +52,8 @@ async function authRoutes(app) {
             tags: ["Authentication"],
             summary: "Delete a user",
             security: [{ accessToken: [] }],
-            params: {
-                type: "object",
-                required: ["id"],
-                properties: { id: { type: "string", format: "uuid" } },
-            },
+            params: schemas_2.idParamsSchema,
         },
     }, handlers_1.handleDeleteAdmin);
-}
+};
+exports.default = authRoutes;

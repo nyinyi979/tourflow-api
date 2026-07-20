@@ -3,9 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.handleGetCities = exports.handleGetStates = exports.handleGetCountries = void 0;
 const data_1 = require("../../data");
 const messages_1 = require("../messages");
-const handleGetCountries = (req, res) => {
+const handleGetCountries = (_req, res) => {
     const countries = Object.keys(data_1.countryData);
-    res.status(200).send({ data: countries });
+    return res.status(200).send({ data: countries });
 };
 exports.handleGetCountries = handleGetCountries;
 const handleGetStates = (req, res) => {
@@ -18,7 +18,7 @@ const handleGetStates = (req, res) => {
         });
     }
     const states = Object.keys(countryEntry);
-    res.status(200).send({ data: states });
+    return res.status(200).send({ data: states });
 };
 exports.handleGetStates = handleGetStates;
 const handleGetCities = (req, res) => {
@@ -37,6 +37,6 @@ const handleGetCities = (req, res) => {
         });
     }
     const cities = countryEntry[state];
-    res.status(200).send({ data: cities });
+    return res.status(200).send({ data: cities });
 };
 exports.handleGetCities = handleGetCities;

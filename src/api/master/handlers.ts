@@ -1,14 +1,19 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { countryData } from "../../data";
 import { messages } from "../messages";
+import { TypeBoxRequest } from "../request";
+import { cityQuerySchema, stateQuerySchema } from "./schemas";
 
-export const handleGetCountries = (req: FastifyRequest, res: FastifyReply) => {
+export const handleGetCountries = (_req: FastifyRequest, res: FastifyReply) => {
   const countries = Object.keys(countryData);
-  res.status(200).send({ data: countries });
+  return res.status(200).send({ data: countries });
 };
 
-export const handleGetStates = (req: FastifyRequest, res: FastifyReply) => {
-  const { country } = req.query as { country: string };
+export const handleGetStates = (
+  req: TypeBoxRequest<{ querystring: typeof stateQuerySchema }>,
+  res: FastifyReply,
+) => {
+  const { country } = req.query;
   const countryEntry = countryData[country];
 
   if (!countryEntry) {
@@ -19,11 +24,14 @@ export const handleGetStates = (req: FastifyRequest, res: FastifyReply) => {
   }
 
   const states = Object.keys(countryEntry);
-  res.status(200).send({ data: states });
+  return res.status(200).send({ data: states });
 };
 
-export const handleGetCities = (req: FastifyRequest, res: FastifyReply) => {
-  const { state, country } = req.query as { state: string; country: string };
+export const handleGetCities = (
+  req: TypeBoxRequest<{ querystring: typeof cityQuerySchema }>,
+  res: FastifyReply,
+) => {
+  const { state, country } = req.query;
   const countryEntry = countryData[country];
 
   if (!countryEntry) {
@@ -41,5 +49,5 @@ export const handleGetCities = (req: FastifyRequest, res: FastifyReply) => {
   }
 
   const cities = countryEntry[state];
-  res.status(200).send({ data: cities });
+  return res.status(200).send({ data: cities });
 };

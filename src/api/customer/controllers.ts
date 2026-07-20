@@ -3,12 +3,12 @@ import { asc, desc, eq, ilike, or } from "drizzle-orm";
 import { sign, verify } from "jsonwebtoken";
 import db from "../../db";
 import { customersTable } from "../../db/customer";
-import {
+import type {
   CustomerReadRequest,
   TCustomerLogin,
   TCustomerSignup,
   TCustomerUpdate,
-} from "./types";
+} from "./schemas";
 import { ConfigurationError } from "../../utils/errors";
 
 const customerColumns = {

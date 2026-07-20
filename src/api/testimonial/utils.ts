@@ -1,5 +1,5 @@
 import { removeFiles, uploadFile } from "../../utils/file";
-import { TTestimonial, UTestimonial } from "./types";
+import type { TTestimonial, UTestimonial } from "./schemas";
 export const handleTestimonialAvatar = async <
   T extends TTestimonial | UTestimonial,
 >(

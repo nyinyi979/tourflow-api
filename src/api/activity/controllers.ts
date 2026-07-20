@@ -6,7 +6,7 @@ import {
   activityImagesTable,
   activityIncludedItemsTable,
 } from "../../db/activity";
-import { ActivityReadRequest, TActivity, UActivity } from "./types";
+import type { ActivityReadRequest, TActivity, UActivity } from "./schemas";
 import {
   insertActivityChildren,
   syncActivityImages,

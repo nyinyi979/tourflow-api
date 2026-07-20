@@ -50,6 +50,7 @@ export async function buildApp(): Promise<FastifyInstance> {
         { name: "Reviews", description: "Tour reviews" },
         { name: "Testimonials", description: "Customer testimonials" },
         { name: "Dashboard", description: "Admin dashboard" },
+        { name: "Files", description: "File uploads" },
         { name: "Master Data", description: "Country, state, and city data" },
       ],
       components: {
@@ -160,7 +161,10 @@ if (require.main === module) {
 }
 
 // Vercel handler
-module.exports = async (req: FastifyRequest, res: FastifyReply) => {
+const handler = async (req: FastifyRequest, res: FastifyReply) => {
   const app = await buildApp();
   app.server.emit("request", req, res);
 };
+
+module.exports = handler;
+module.exports.buildApp = buildApp;

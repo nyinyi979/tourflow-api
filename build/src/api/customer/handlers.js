@@ -46,9 +46,6 @@ exports.handleCustomerLogin = handleCustomerLogin;
 const handleGetCustomers = async (req, res) => {
     try {
         const params = req.query;
-        if (params.page === undefined || params.perPage === undefined) {
-            return res.status(400).send({ ...messages_1.messages.schemaError });
-        }
         const response = await (0, controllers_1.getCustomers)({
             ...params,
             page: +params.page,

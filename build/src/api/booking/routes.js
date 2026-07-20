@@ -1,114 +1,65 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = bookingRoutes;
 const auth_1 = require("../../utils/auth");
+const schemas_1 = require("../schemas");
 const handlers_1 = require("./handlers");
-const idParams = {
-    type: "object",
-    required: ["id"],
-    properties: { id: { type: "string", format: "uuid" } },
-};
-const querystring = {
-    type: "object",
-    required: ["page", "perPage"],
-    properties: {
-        page: { type: "integer", minimum: 0 },
-        perPage: { type: "integer", minimum: 1, maximum: 100 },
-        query: { type: "string" },
-        status: {
-            type: "string",
-            enum: ["pending", "confirmed", "cancelled", "completed"],
-        },
-        itemType: { type: "string", enum: ["tour", "activity"] },
-        sortBy: {
-            type: "string",
-            enum: [
-                "bookingNumber",
-                "travelDate",
-                "totalPrice",
-                "status",
-                "createdAt",
-            ],
-        },
-        orderBy: { type: "string", enum: ["asc", "desc"] },
-    },
-};
-const bookingCreateBody = {
-    type: "object",
-    required: ["itemType", "travelDate", "adults"],
-    properties: {
-        itemType: { type: "string", enum: ["tour", "activity"] },
-        tourId: { anyOf: [{ type: "string", format: "uuid" }, { type: "null" }] },
-        activityId: {
-            anyOf: [{ type: "string", format: "uuid" }, { type: "null" }],
-        },
-        travelDate: { type: "string", format: "date" },
-        adults: { type: "integer", minimum: 1 },
-        children: { type: "integer", minimum: 0, default: 0 },
-    },
-};
-const bookingUpdateBody = {
-    type: "object",
-    minProperties: 1,
-    properties: {
-        travelDate: { type: "string", format: "date" },
-        adults: { type: "integer", minimum: 1 },
-        children: { type: "integer", minimum: 0 },
-        status: {
-            type: "string",
-            enum: ["pending", "confirmed", "cancelled", "completed"],
-        },
-    },
-};
-async function bookingRoutes(app) {
+const schemas_2 = require("./schemas");
+const bookingRoutes = async (app) => {
     app.post("", {
         schema: {
             tags: ["Bookings"],
             summary: "Create a booking",
             security: [{ accessToken: [] }],
-            body: bookingCreateBody,
+            body: schemas_2.createBookingBodySchema,
         },
-    }, handlers_1.handleCreateBooking);
+        handler: handlers_1.handleCreateBooking,
+    });
     app.get("", {
         preHandler: auth_1.authenticateAdmin,
         schema: {
             tags: ["Bookings"],
             summary: "List bookings",
             security: [{ accessToken: [] }],
-            querystring,
+            querystring: schemas_2.bookingQuerySchema,
         },
-    }, handlers_1.handleGetBookings);
+        handler: handlers_1.handleGetBookings,
+    });
     app.get("/mine", {
         schema: {
             tags: ["Bookings"],
             summary: "List my bookings",
             security: [{ accessToken: [] }],
-            querystring,
+            querystring: schemas_2.bookingQuerySchema,
         },
-    }, handlers_1.handleGetMyBookings);
+        handler: handlers_1.handleGetMyBookings,
+    });
     app.get("/:id", {
         schema: {
             tags: ["Bookings"],
             summary: "Get a booking",
             security: [{ accessToken: [] }],
-            params: idParams,
+            params: schemas_1.idParamsSchema,
         },
-    }, handlers_1.handleGetBookingById);
+        handler: handlers_1.handleGetBookingById,
+    });
     app.put("/:id", {
         schema: {
             tags: ["Bookings"],
             summary: "Update a booking",
             security: [{ accessToken: [] }],
-            params: idParams,
-            body: bookingUpdateBody,
+            params: schemas_1.idParamsSchema,
+            body: schemas_2.updateBookingBodySchema,
         },
-    }, handlers_1.handleUpdateBooking);
+        handler: handlers_1.handleUpdateBooking,
+    });
     app.delete("/:id", {
         schema: {
             tags: ["Bookings"],
             summary: "Delete a booking",
             security: [{ accessToken: [] }],
-            params: idParams,
+            params: schemas_1.idParamsSchema,
         },
-    }, handlers_1.handleDeleteBooking);
-}
+        handler: handlers_1.handleDeleteBooking,
+    });
+};
+exports.default = bookingRoutes;

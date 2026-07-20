@@ -7,7 +7,7 @@ import {
   tourItineraryTable,
   toursTable,
 } from "../../db/tour";
-import { TourReadRequest, TTour, UTour } from "./types";
+import type { TourReadRequest, TTour, UTour } from "./schemas";
 import {
   insertTourChildren,
   syncTourHighlights,

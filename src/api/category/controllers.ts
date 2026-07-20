@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, ilike } from "drizzle-orm";
 import db from "../../db";
 import { categoriesTable } from "../../db/category";
-import { CategoryReadRequest, TCategory, UCategory } from "./types";
+import type { CategoryReadRequest, TCategory, UCategory } from "./schemas";
 
 export const createCategory = async (data: TCategory) => {
   const response = await db

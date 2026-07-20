@@ -8,6 +8,8 @@ import {
 import { messages } from "../messages";
 import handleFormData from "../../utils/handleFormData";
 import { duplicateFileS3, TFile } from "../../utils/file";
+import { TypeBoxRequest } from "../request";
+import { fileUrlBodySchema, fileUrlQuerySchema } from "./schemas";
 
 export const handleFileUploadTmp = async (
   req: FastifyRequest,
@@ -58,11 +60,11 @@ export const handleCreateBatchFiles = async (
 };
 
 export const handleUploadFile = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ body: typeof fileUrlBodySchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const body = req.body as { url: string };
+    const body = req.body;
     const result = await uploadFile(body.url);
     return res.code(201).send({
       ...messages.createOk,
@@ -73,11 +75,11 @@ export const handleUploadFile = async (
   }
 };
 export const handleRemoveFile = async (
-  req: FastifyRequest,
+  req: TypeBoxRequest<{ querystring: typeof fileUrlQuerySchema }>,
   res: FastifyReply,
 ) => {
   try {
-    const { url } = req.query as { url: string };
+    const { url } = req.query;
     if (!url)
       return res
         .code(400)
@@ -90,10 +92,10 @@ export const handleRemoveFile = async (
 };
 
 export const handleDuplicateFile = async (
-  req: FastifyRequest,
-  res: FastifyReply,
+  req: TypeBoxRequest<{ querystring: typeof fileUrlQuerySchema }>,
+  _res: FastifyReply,
 ) => {
-  const url = req.query as { url: string };
+  const url = req.query;
   const result = await duplicateFileS3(url.url);
   return result;
 };
