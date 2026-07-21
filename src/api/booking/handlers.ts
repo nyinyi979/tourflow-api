@@ -7,12 +7,14 @@ import {
   getBookings,
   updateBooking,
   deleteBooking,
+  payBooking,
 } from "./controllers";
 import { TypeBoxRequest } from "../request";
 import { idParamsSchema } from "../schemas";
 import {
   bookingQuerySchema,
   createBookingBodySchema,
+  payBookingBodySchema,
   updateBookingBodySchema,
 } from "./schemas";
 
@@ -109,6 +111,21 @@ export const handleUpdateBooking = async (
     throw err;
   }
 };
+
+export const handlePayBooking = async (
+  req: TypeBoxRequest<{
+    params: typeof idParamsSchema;
+    body: typeof payBookingBodySchema;
+  }>,
+  res: FastifyReply,
+) => {
+  const customer = await authenticateCustomer(req, res);
+  if (!customer) return;
+
+  const data = await payBooking(req.params.id, customer.id, req.body);
+  return res.status(200).send({ ...messages.updateOk, data });
+};
+
 export const handleDeleteBooking = async (
   req: TypeBoxRequest<{ params: typeof idParamsSchema }>,
   res: FastifyReply,

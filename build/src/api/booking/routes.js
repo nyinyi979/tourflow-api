@@ -42,6 +42,16 @@ const bookingRoutes = async (app) => {
         },
         handler: handlers_1.handleGetBookingById,
     });
+    app.post("/:id/payment", {
+        schema: {
+            tags: ["Bookings"],
+            summary: "Simulate a booking payment",
+            security: [{ accessToken: [] }],
+            params: schemas_1.idParamsSchema,
+            body: schemas_2.payBookingBodySchema,
+        },
+        handler: handlers_1.handlePayBooking,
+    });
     app.put("/:id", {
         schema: {
             tags: ["Bookings"],

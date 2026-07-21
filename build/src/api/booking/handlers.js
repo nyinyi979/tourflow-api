@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.handleDeleteBooking = exports.handleUpdateBooking = exports.handleGetBookingById = exports.handleGetMyBookings = exports.handleGetBookings = exports.handleCreateBooking = void 0;
+exports.handleDeleteBooking = exports.handlePayBooking = exports.handleUpdateBooking = exports.handleGetBookingById = exports.handleGetMyBookings = exports.handleGetBookings = exports.handleCreateBooking = void 0;
 const auth_1 = require("../../utils/auth");
 const messages_1 = require("../messages");
 const controllers_1 = require("./controllers");
@@ -89,6 +89,14 @@ const handleUpdateBooking = async (req, res) => {
     }
 };
 exports.handleUpdateBooking = handleUpdateBooking;
+const handlePayBooking = async (req, res) => {
+    const customer = await (0, auth_1.authenticateCustomer)(req, res);
+    if (!customer)
+        return;
+    const data = await (0, controllers_1.payBooking)(req.params.id, customer.id, req.body);
+    return res.status(200).send({ ...messages_1.messages.updateOk, data });
+};
+exports.handlePayBooking = handlePayBooking;
 const handleDeleteBooking = async (req, res) => {
     try {
         const user = await (0, auth_1.authenticateUser)(req, res);

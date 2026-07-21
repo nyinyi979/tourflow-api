@@ -9,20 +9,19 @@ const db_1 = __importDefault(require("../../db"));
 const activity_1 = require("../../db/activity");
 const utils_1 = require("./utils");
 const activityWith = {
-    category: true,
-    images: { orderBy: (0, drizzle_orm_1.asc)(activity_1.activityImagesTable.position) },
-    highlights: { orderBy: (0, drizzle_orm_1.asc)(activity_1.activityHighlightsTable.position) },
-    included: { orderBy: (0, drizzle_orm_1.asc)(activity_1.activityIncludedItemsTable.position) },
-};
-const mapActivity = (row) => {
-    var _a, _b, _c, _d;
-    return ({
-        ...row,
-        category: (_a = row.category) === null || _a === void 0 ? void 0 : _a.label,
-        images: ((_b = row.images) === null || _b === void 0 ? void 0 : _b.map((x) => ({ id: x.id, url: x.url }))) || [],
-        highlights: ((_c = row.highlights) === null || _c === void 0 ? void 0 : _c.map((x) => ({ id: x.id, label: x.label }))) || [],
-        included: ((_d = row.included) === null || _d === void 0 ? void 0 : _d.map((x) => ({ id: x.id, label: x.label }))) || [],
-    });
+    category: { columns: { label: true } },
+    images: {
+        columns: { id: true, url: true },
+        orderBy: (0, drizzle_orm_1.asc)(activity_1.activityImagesTable.position),
+    },
+    highlights: {
+        columns: { id: true, label: true },
+        orderBy: (0, drizzle_orm_1.asc)(activity_1.activityHighlightsTable.position),
+    },
+    included: {
+        columns: { id: true, label: true },
+        orderBy: (0, drizzle_orm_1.asc)(activity_1.activityIncludedItemsTable.position),
+    },
 };
 const createActivity = async (data) => {
     const id = await db_1.default.transaction(async (tx) => {
@@ -73,15 +72,14 @@ const getActivities = async ({ page, perPage, query, categoryId, sortBy, orderBy
         }),
         db_1.default.$count(activity_1.activitiesTable, where),
     ]);
-    return { data: rows.map(mapActivity), total };
+    return { data: rows, total };
 };
 exports.getActivities = getActivities;
 const getActivityById = async (id) => {
-    const row = await db_1.default.query.activitiesTable.findFirst({
+    return db_1.default.query.activitiesTable.findFirst({
         where: (0, drizzle_orm_1.eq)(activity_1.activitiesTable.id, id),
         with: activityWith,
     });
-    return row ? mapActivity(row) : undefined;
 };
 exports.getActivityById = getActivityById;
 const updateActivity = async (data) => {

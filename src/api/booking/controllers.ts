@@ -4,40 +4,27 @@ import db from "../../db";
 import { activitiesTable } from "../../db/activity";
 import { bookingActivityTable, bookingsTable } from "../../db/booking";
 import { toursTable } from "../../db/tour";
-import type { BookingReadRequest, TBooking, UBooking } from "./schemas";
-import { NotFoundError } from "../../utils/errors";
+import type {
+  BookingReadRequest,
+  PayBookingRequest,
+  TBooking,
+  UBooking,
+} from "./schemas";
+import {
+  BadRequestError,
+  ForbiddenError,
+  NotFoundError,
+} from "../../utils/errors";
 
 const bookingWith = {
-  customer: true,
-  tour: true,
-  activity: true,
-  events: { orderBy: asc(bookingActivityTable.occurredAt) },
+  customer: { columns: { name: true, email: true, avatar: true } },
+  tour: { columns: { title: true } },
+  activity: { columns: { title: true } },
+  events: {
+    columns: { occurredAt: true, label: true },
+    orderBy: asc(bookingActivityTable.occurredAt),
+  },
 } as const;
-const mapBooking = (row: any) => ({
-  id: row.id,
-  bookingNumber: row.bookingNumber,
-  customer: row.customer
-    ? {
-        name: row.customer.name,
-        email: row.customer.email,
-        avatar: row.customer.avatar,
-      }
-    : null,
-  tour: { name: row.tour?.title || row.activity?.title, type: row.itemType },
-  tourId: row.tourId,
-  activityId: row.activityId,
-  customerId: row.customerId,
-  travelDate: row.travelDate,
-  createdAt: row.createdAt,
-  guests: { adults: row.adults, children: row.children },
-  totalPrice: row.totalPrice,
-  status: row.status,
-  activity:
-    row.events?.map((event: any) => ({
-      at: event.occurredAt,
-      label: event.label,
-    })) || [],
-});
 
 const getItemPrice = async (data: {
   itemType: "tour" | "activity";
@@ -128,14 +115,13 @@ export const getBookings = async (
     }),
     db.$count(bookingsTable, where),
   ]);
-  return { data: rows.map(mapBooking), total };
+  return { data: rows, total };
 };
 export const getBookingById = async (id: string) => {
-  const row = await db.query.bookingsTable.findFirst({
+  return db.query.bookingsTable.findFirst({
     where: eq(bookingsTable.id, id),
     with: bookingWith,
   });
-  return row ? mapBooking(row) : undefined;
 };
 
 export const updateBooking = async (id: string, data: UBooking) => {
@@ -172,6 +158,51 @@ export const updateBooking = async (id: string, data: UBooking) => {
   });
   return getBookingById(id);
 };
+
+export const payBooking = async (
+  id: string,
+  customerId: string,
+  { paymentMethod }: PayBookingRequest,
+) => {
+  const current = await db.query.bookingsTable.findFirst({
+    where: eq(bookingsTable.id, id),
+  });
+
+  if (!current) throw new NotFoundError("Booking not found");
+  if (current.customerId !== customerId) throw new ForbiddenError();
+  if (current.paymentStatus === "paid") return getBookingById(id);
+  if (current.status === "cancelled" || current.status === "completed") {
+    throw new BadRequestError(`A ${current.status} booking cannot be paid.`);
+  }
+
+  const paidAt = new Date();
+  const paymentReference = `PAY-${Date.now()}-${randomUUID()
+    .slice(0, 6)
+    .toUpperCase()}`;
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(bookingsTable)
+      .set({
+        status: "confirmed",
+        paymentStatus: "paid",
+        paymentMethod,
+        paymentReference,
+        paidAt,
+        updatedAt: paidAt,
+      })
+      .where(eq(bookingsTable.id, id));
+
+    await tx.insert(bookingActivityTable).values({
+      bookingId: id,
+      occurredAt: paidAt,
+      label: "Payment received",
+    });
+  });
+
+  return getBookingById(id);
+};
+
 export const deleteBooking = async (id: string) => {
   const previous = await getBookingById(id);
   if (!previous) return undefined;

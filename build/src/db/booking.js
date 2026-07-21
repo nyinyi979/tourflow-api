@@ -38,6 +38,12 @@ exports.bookingsTable = (0, pg_core_1.pgTable)("bookings", {
         mode: "number",
     }).notNull(),
     status: (0, exports.bookingStatusEnum)().notNull().default("pending"),
+    paymentStatus: (0, pg_core_1.varchar)("payment_status", { length: 20 })
+        .notNull()
+        .default("unpaid"),
+    paymentMethod: (0, pg_core_1.varchar)("payment_method", { length: 20 }),
+    paymentReference: (0, pg_core_1.varchar)("payment_reference", { length: 50 }),
+    paidAt: (0, pg_core_1.timestamp)("paid_at", { withTimezone: true }),
     createdAt: (0, pg_core_1.timestamp)("created_at", { withTimezone: true })
         .notNull()
         .defaultNow(),
@@ -50,6 +56,8 @@ exports.bookingsTable = (0, pg_core_1.pgTable)("bookings", {
     (0, pg_core_1.index)("bookings_tour_id_index").on(table.tourId),
     (0, pg_core_1.index)("bookings_activity_id_index").on(table.activityId),
     (0, pg_core_1.index)("bookings_status_index").on(table.status),
+    (0, pg_core_1.index)("bookings_payment_status_index").on(table.paymentStatus),
+    (0, pg_core_1.uniqueIndex)("bookings_payment_reference_unique").on(table.paymentReference),
     (0, pg_core_1.index)("bookings_travel_date_index").on(table.travelDate),
 ]);
 exports.bookingActivityTable = (0, pg_core_1.pgTable)("booking_activity", {

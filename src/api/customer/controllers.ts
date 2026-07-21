@@ -1,8 +1,9 @@
 import bcrypt from "bcrypt";
-import { asc, desc, eq, ilike, or } from "drizzle-orm";
+import { asc, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { sign, verify } from "jsonwebtoken";
 import db from "../../db";
 import { customersTable } from "../../db/customer";
+import { bookingsTable } from "../../db/booking";
 import type {
   CustomerReadRequest,
   TCustomerLogin,
@@ -93,39 +94,32 @@ export const getCustomers = async ({
       ? sortableColumns[sortBy as keyof typeof sortableColumns]
       : customersTable.registeredAt;
 
-  const [rows, total] = await Promise.all([
-    db.query.customersTable.findMany({
-      where,
-      columns: {
-        id: true,
-        name: true,
-        email: true,
-        avatar: true,
-        registeredAt: true,
-      },
-      with: {
-        bookings: {
-          columns: {
-            totalPrice: true,
-          },
-        },
-      },
-      orderBy: [orderBy === "asc" ? asc(orderColumn) : desc(orderColumn)],
-      limit: perPage,
-      offset: page * perPage,
-    }),
+  const [data, total] = await Promise.all([
+    db
+      .select({
+        id: customersTable.id,
+        name: customersTable.name,
+        email: customersTable.email,
+        avatar: customersTable.avatar,
+        registeredAt: customersTable.registeredAt,
+        totalBookings: sql<number>`count(${bookingsTable.id})::integer`,
+        totalSpent: sql<number>`coalesce(sum(${bookingsTable.totalPrice}), 0)::double precision`,
+      })
+      .from(customersTable)
+      .leftJoin(bookingsTable, eq(bookingsTable.customerId, customersTable.id))
+      .where(where)
+      .groupBy(
+        customersTable.id,
+        customersTable.name,
+        customersTable.email,
+        customersTable.avatar,
+        customersTable.registeredAt,
+      )
+      .orderBy(orderBy === "asc" ? asc(orderColumn) : desc(orderColumn))
+      .limit(perPage)
+      .offset(page * perPage),
     db.$count(customersTable, where),
   ]);
-
-  const data = rows.map(({ bookings, ...customer }) => ({
-    ...customer,
-    totalBookings: bookings.length,
-    totalSpent: bookings.reduce(
-      (totalSpent, booking) => totalSpent + booking.totalPrice,
-      0,
-    ),
-  }));
-
   return { data, total };
 };
 

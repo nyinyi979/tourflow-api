@@ -52,6 +52,12 @@ export const bookingsTable = pgTable(
       mode: "number",
     }).notNull(),
     status: bookingStatusEnum().notNull().default("pending"),
+    paymentStatus: varchar("payment_status", { length: 20 })
+      .notNull()
+      .default("unpaid"),
+    paymentMethod: varchar("payment_method", { length: 20 }),
+    paymentReference: varchar("payment_reference", { length: 50 }),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -65,6 +71,10 @@ export const bookingsTable = pgTable(
     index("bookings_tour_id_index").on(table.tourId),
     index("bookings_activity_id_index").on(table.activityId),
     index("bookings_status_index").on(table.status),
+    index("bookings_payment_status_index").on(table.paymentStatus),
+    uniqueIndex("bookings_payment_reference_unique").on(
+      table.paymentReference,
+    ),
     index("bookings_travel_date_index").on(table.travelDate),
   ],
 );

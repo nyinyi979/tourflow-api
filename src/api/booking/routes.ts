@@ -7,11 +7,13 @@ import {
   handleGetBookingById,
   handleGetBookings,
   handleGetMyBookings,
+  handlePayBooking,
   handleUpdateBooking,
 } from "./handlers";
 import {
   bookingQuerySchema,
   createBookingBodySchema,
+  payBookingBodySchema,
   updateBookingBodySchema,
 } from "./schemas";
 
@@ -52,6 +54,16 @@ const bookingRoutes: FastifyPluginAsyncTypebox = async (app) => {
       params: idParamsSchema,
     },
     handler: handleGetBookingById,
+  });
+  app.post("/:id/payment", {
+    schema: {
+      tags: ["Bookings"],
+      summary: "Simulate a booking payment",
+      security: [{ accessToken: [] }],
+      params: idParamsSchema,
+      body: payBookingBodySchema,
+    },
+    handler: handlePayBooking,
   });
   app.put("/:id", {
     schema: {

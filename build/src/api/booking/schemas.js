@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.bookingQuerySchema = exports.updateBookingBodySchema = exports.createBookingBodySchema = exports.bookingItemTypeSchema = exports.bookingStatusSchema = void 0;
+exports.bookingQuerySchema = exports.updateBookingBodySchema = exports.createBookingBodySchema = exports.payBookingBodySchema = exports.paymentMethodSchema = exports.bookingItemTypeSchema = exports.bookingStatusSchema = void 0;
 const type_provider_typebox_1 = require("@fastify/type-provider-typebox");
 const schemas_1 = require("../schemas");
 exports.bookingStatusSchema = type_provider_typebox_1.Type.Union([
@@ -13,6 +13,13 @@ exports.bookingItemTypeSchema = type_provider_typebox_1.Type.Union([
     type_provider_typebox_1.Type.Literal("tour"),
     type_provider_typebox_1.Type.Literal("activity"),
 ]);
+exports.paymentMethodSchema = type_provider_typebox_1.Type.Union([
+    type_provider_typebox_1.Type.Literal("card"),
+    type_provider_typebox_1.Type.Literal("wallet"),
+]);
+exports.payBookingBodySchema = type_provider_typebox_1.Type.Object({
+    paymentMethod: exports.paymentMethodSchema,
+});
 const bookingFields = {
     travelDate: type_provider_typebox_1.Type.String({ format: "date" }),
     adults: type_provider_typebox_1.Type.Integer({ minimum: 1 }),

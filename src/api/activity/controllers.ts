@@ -14,19 +14,20 @@ import {
 } from "./utils";
 
 const activityWith = {
-  category: true,
-  images: { orderBy: asc(activityImagesTable.position) },
-  highlights: { orderBy: asc(activityHighlightsTable.position) },
-  included: { orderBy: asc(activityIncludedItemsTable.position) },
+  category: { columns: { label: true } },
+  images: {
+    columns: { id: true, url: true },
+    orderBy: asc(activityImagesTable.position),
+  },
+  highlights: {
+    columns: { id: true, label: true },
+    orderBy: asc(activityHighlightsTable.position),
+  },
+  included: {
+    columns: { id: true, label: true },
+    orderBy: asc(activityIncludedItemsTable.position),
+  },
 } as const;
-const mapActivity = (row: any) => ({
-  ...row,
-  category: row.category?.label,
-  images: row.images?.map((x: any) => ({ id: x.id, url: x.url })) || [],
-  highlights:
-    row.highlights?.map((x: any) => ({ id: x.id, label: x.label })) || [],
-  included: row.included?.map((x: any) => ({ id: x.id, label: x.label })) || [],
-});
 
 export const createActivity = async (data: TActivity) => {
   const id = await db.transaction(async (tx) => {
@@ -83,14 +84,13 @@ export const getActivities = async ({
     }),
     db.$count(activitiesTable, where),
   ]);
-  return { data: rows.map(mapActivity), total };
+  return { data: rows, total };
 };
 export const getActivityById = async (id: string) => {
-  const row = await db.query.activitiesTable.findFirst({
+  return db.query.activitiesTable.findFirst({
     where: eq(activitiesTable.id, id),
     with: activityWith,
   });
-  return row ? mapActivity(row) : undefined;
 };
 
 export const updateActivity = async (data: UActivity) => {

@@ -8,35 +8,30 @@ const drizzle_orm_1 = require("drizzle-orm");
 const db_1 = __importDefault(require("../../db"));
 const review_1 = require("../../db/review");
 const tour_1 = require("../../db/tour");
-const reviewWith = { tour: { columns: { id: true, title: true } } };
-const mapReview = (row) => {
-    var _a;
-    return ({
-        id: row.id,
-        customer: row.customerName,
-        name: row.customerName,
-        avatar: row.avatar,
-        tour: (_a = row.tour) === null || _a === void 0 ? void 0 : _a.title,
-        tourId: row.tourId,
-        rating: row.rating,
-        comment: row.comment,
-        date: row.reviewedAt,
-        status: row.status,
-    });
+const reviewColumns = {
+    id: true,
+    customerName: true,
+    avatar: true,
+    tourId: true,
+    rating: true,
+    comment: true,
+    reviewedAt: true,
+    status: true,
 };
+const reviewWith = { tour: { columns: { id: true, title: true } } };
 const refreshTourRating = async (tourId) => {
-    const rows = await db_1.default.query.reviewsTable.findMany({
-        where: (0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(review_1.reviewsTable.tourId, tourId), (0, drizzle_orm_1.eq)(review_1.reviewsTable.status, "published")),
-        columns: { rating: true },
-    });
-    const rating = rows.length
-        ? rows.reduce((sum, row) => sum + row.rating, 0) / rows.length
-        : 0;
+    const [stats] = await db_1.default
+        .select({
+        rating: (0, drizzle_orm_1.sql) `coalesce(avg(${review_1.reviewsTable.rating}), 0)::double precision`,
+        reviewCount: (0, drizzle_orm_1.sql) `count(*)::integer`,
+    })
+        .from(review_1.reviewsTable)
+        .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(review_1.reviewsTable.tourId, tourId), (0, drizzle_orm_1.eq)(review_1.reviewsTable.status, "published")));
     await db_1.default
         .update(tour_1.toursTable)
         .set({
-        rating: Math.round(rating * 10) / 10,
-        reviewCount: rows.length,
+        rating: Math.round(stats.rating * 10) / 10,
+        reviewCount: stats.reviewCount,
         updatedAt: new Date(),
     })
         .where((0, drizzle_orm_1.eq)(tour_1.toursTable.id, tourId));
@@ -80,6 +75,7 @@ const getReviews = async ({ page, perPage, query, tourId, status, sortBy, orderB
     const [rows, total] = await Promise.all([
         db_1.default.query.reviewsTable.findMany({
             where,
+            columns: reviewColumns,
             with: reviewWith,
             orderBy: [orderBy === "asc" ? (0, drizzle_orm_1.asc)(orderColumn) : (0, drizzle_orm_1.desc)(orderColumn)],
             limit: perPage,
@@ -87,15 +83,15 @@ const getReviews = async ({ page, perPage, query, tourId, status, sortBy, orderB
         }),
         db_1.default.$count(review_1.reviewsTable, where),
     ]);
-    return { data: rows.map(mapReview), total };
+    return { data: rows, total };
 };
 exports.getReviews = getReviews;
 const getReviewById = async (id) => {
-    const row = await db_1.default.query.reviewsTable.findFirst({
+    return db_1.default.query.reviewsTable.findFirst({
         where: (0, drizzle_orm_1.eq)(review_1.reviewsTable.id, id),
+        columns: reviewColumns,
         with: reviewWith,
     });
-    return row ? mapReview(row) : undefined;
 };
 exports.getReviewById = getReviewById;
 const updateReview = async (data) => {

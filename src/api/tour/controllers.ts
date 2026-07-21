@@ -15,34 +15,31 @@ import {
   syncTourItinerary,
 } from "./utils";
 
-const mapTour = (tour: any) => ({
-  ...tour,
-  category: tour.category?.label,
-  images:
-    tour.images?.map((item: any) => ({ id: item.id, url: item.url })) || [],
-  highlights:
-    tour.highlights?.map((item: any) => ({
-      id: item.id,
-      label: item.label,
-    })) || [],
-  itinerary: tour.itinerary?.map(({ tourId, ...item }: any) => item) || [],
-  reviews:
-    tour.reviews?.map((review: any) => ({
-      id: review.id,
-      name: review.customerName,
-      avatar: review.avatar,
-      date: review.reviewedAt,
-      rating: review.rating,
-      comment: review.comment,
-    })) || [],
-});
-
 const tourWith = {
-  category: true,
-  images: { orderBy: asc(tourImagesTable.position) },
-  highlights: { orderBy: asc(tourHighlightsTable.position) },
-  itinerary: { orderBy: asc(tourItineraryTable.day) },
-  reviews: { where: eq(reviewsTable.status, "published") },
+  category: { columns: { label: true } },
+  images: {
+    columns: { id: true, url: true },
+    orderBy: asc(tourImagesTable.position),
+  },
+  highlights: {
+    columns: { id: true, label: true },
+    orderBy: asc(tourHighlightsTable.position),
+  },
+  itinerary: {
+    columns: { id: true, day: true, title: true, description: true },
+    orderBy: asc(tourItineraryTable.day),
+  },
+  reviews: {
+    columns: {
+      id: true,
+      customerName: true,
+      avatar: true,
+      reviewedAt: true,
+      rating: true,
+      comment: true,
+    },
+    where: eq(reviewsTable.status, "published"),
+  },
 } as const;
 
 export const createTour = async (data: TTour) => {
@@ -105,15 +102,14 @@ export const getTours = async ({
     }),
     db.$count(toursTable, where),
   ]);
-  return { data: rows.map(mapTour), total };
+  return { data: rows, total };
 };
 
 export const getTourById = async (id: string) => {
-  const row = await db.query.toursTable.findFirst({
+  return db.query.toursTable.findFirst({
     where: eq(toursTable.id, id),
     with: tourWith,
   });
-  return row ? mapTour(row) : undefined;
 };
 
 export const updateTour = async (data: UTour) => {

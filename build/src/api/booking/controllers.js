@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteBooking = exports.updateBooking = exports.getBookingById = exports.getBookings = exports.createBooking = void 0;
+exports.deleteBooking = exports.payBooking = exports.updateBooking = exports.getBookingById = exports.getBookings = exports.createBooking = void 0;
 const drizzle_orm_1 = require("drizzle-orm");
 const node_crypto_1 = require("node:crypto");
 const db_1 = __importDefault(require("../../db"));
@@ -12,37 +12,13 @@ const booking_1 = require("../../db/booking");
 const tour_1 = require("../../db/tour");
 const errors_1 = require("../../utils/errors");
 const bookingWith = {
-    customer: true,
-    tour: true,
-    activity: true,
-    events: { orderBy: (0, drizzle_orm_1.asc)(booking_1.bookingActivityTable.occurredAt) },
-};
-const mapBooking = (row) => {
-    var _a, _b, _c;
-    return ({
-        id: row.id,
-        bookingNumber: row.bookingNumber,
-        customer: row.customer
-            ? {
-                name: row.customer.name,
-                email: row.customer.email,
-                avatar: row.customer.avatar,
-            }
-            : null,
-        tour: { name: ((_a = row.tour) === null || _a === void 0 ? void 0 : _a.title) || ((_b = row.activity) === null || _b === void 0 ? void 0 : _b.title), type: row.itemType },
-        tourId: row.tourId,
-        activityId: row.activityId,
-        customerId: row.customerId,
-        travelDate: row.travelDate,
-        createdAt: row.createdAt,
-        guests: { adults: row.adults, children: row.children },
-        totalPrice: row.totalPrice,
-        status: row.status,
-        activity: ((_c = row.events) === null || _c === void 0 ? void 0 : _c.map((event) => ({
-            at: event.occurredAt,
-            label: event.label,
-        }))) || [],
-    });
+    customer: { columns: { name: true, email: true, avatar: true } },
+    tour: { columns: { title: true } },
+    activity: { columns: { title: true } },
+    events: {
+        columns: { occurredAt: true, label: true },
+        orderBy: (0, drizzle_orm_1.asc)(booking_1.bookingActivityTable.occurredAt),
+    },
 };
 const getItemPrice = async (data) => {
     if (data.itemType === "tour" && data.tourId)
@@ -120,15 +96,14 @@ const getBookings = async ({ page, perPage, query, status, itemType, sortBy, ord
         }),
         db_1.default.$count(booking_1.bookingsTable, where),
     ]);
-    return { data: rows.map(mapBooking), total };
+    return { data: rows, total };
 };
 exports.getBookings = getBookings;
 const getBookingById = async (id) => {
-    const row = await db_1.default.query.bookingsTable.findFirst({
+    return db_1.default.query.bookingsTable.findFirst({
         where: (0, drizzle_orm_1.eq)(booking_1.bookingsTable.id, id),
         with: bookingWith,
     });
-    return row ? mapBooking(row) : undefined;
 };
 exports.getBookingById = getBookingById;
 const updateBooking = async (id, data) => {
@@ -169,6 +144,44 @@ const updateBooking = async (id, data) => {
     return (0, exports.getBookingById)(id);
 };
 exports.updateBooking = updateBooking;
+const payBooking = async (id, customerId, { paymentMethod }) => {
+    const current = await db_1.default.query.bookingsTable.findFirst({
+        where: (0, drizzle_orm_1.eq)(booking_1.bookingsTable.id, id),
+    });
+    if (!current)
+        throw new errors_1.NotFoundError("Booking not found");
+    if (current.customerId !== customerId)
+        throw new errors_1.ForbiddenError();
+    if (current.paymentStatus === "paid")
+        return (0, exports.getBookingById)(id);
+    if (current.status === "cancelled" || current.status === "completed") {
+        throw new errors_1.BadRequestError(`A ${current.status} booking cannot be paid.`);
+    }
+    const paidAt = new Date();
+    const paymentReference = `PAY-${Date.now()}-${(0, node_crypto_1.randomUUID)()
+        .slice(0, 6)
+        .toUpperCase()}`;
+    await db_1.default.transaction(async (tx) => {
+        await tx
+            .update(booking_1.bookingsTable)
+            .set({
+            status: "confirmed",
+            paymentStatus: "paid",
+            paymentMethod,
+            paymentReference,
+            paidAt,
+            updatedAt: paidAt,
+        })
+            .where((0, drizzle_orm_1.eq)(booking_1.bookingsTable.id, id));
+        await tx.insert(booking_1.bookingActivityTable).values({
+            bookingId: id,
+            occurredAt: paidAt,
+            label: "Payment received",
+        });
+    });
+    return (0, exports.getBookingById)(id);
+};
+exports.payBooking = payBooking;
 const deleteBooking = async (id) => {
     const previous = await (0, exports.getBookingById)(id);
     if (!previous)

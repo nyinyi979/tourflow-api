@@ -9,6 +9,7 @@ const drizzle_orm_1 = require("drizzle-orm");
 const jsonwebtoken_1 = require("jsonwebtoken");
 const db_1 = __importDefault(require("../../db"));
 const customer_1 = require("../../db/customer");
+const booking_1 = require("../../db/booking");
 const errors_1 = require("../../utils/errors");
 const customerColumns = {
     id: customer_1.customersTable.id,
@@ -71,34 +72,26 @@ const getCustomers = async ({ page, perPage, query, sortBy, orderBy, }) => {
     const orderColumn = sortBy && sortBy in sortableColumns
         ? sortableColumns[sortBy]
         : customer_1.customersTable.registeredAt;
-    const [rows, total] = await Promise.all([
-        db_1.default.query.customersTable.findMany({
-            where,
-            columns: {
-                id: true,
-                name: true,
-                email: true,
-                avatar: true,
-                registeredAt: true,
-            },
-            with: {
-                bookings: {
-                    columns: {
-                        totalPrice: true,
-                    },
-                },
-            },
-            orderBy: [orderBy === "asc" ? (0, drizzle_orm_1.asc)(orderColumn) : (0, drizzle_orm_1.desc)(orderColumn)],
-            limit: perPage,
-            offset: page * perPage,
-        }),
+    const [data, total] = await Promise.all([
+        db_1.default
+            .select({
+            id: customer_1.customersTable.id,
+            name: customer_1.customersTable.name,
+            email: customer_1.customersTable.email,
+            avatar: customer_1.customersTable.avatar,
+            registeredAt: customer_1.customersTable.registeredAt,
+            totalBookings: (0, drizzle_orm_1.sql) `count(${booking_1.bookingsTable.id})::integer`,
+            totalSpent: (0, drizzle_orm_1.sql) `coalesce(sum(${booking_1.bookingsTable.totalPrice}), 0)::double precision`,
+        })
+            .from(customer_1.customersTable)
+            .leftJoin(booking_1.bookingsTable, (0, drizzle_orm_1.eq)(booking_1.bookingsTable.customerId, customer_1.customersTable.id))
+            .where(where)
+            .groupBy(customer_1.customersTable.id, customer_1.customersTable.name, customer_1.customersTable.email, customer_1.customersTable.avatar, customer_1.customersTable.registeredAt)
+            .orderBy(orderBy === "asc" ? (0, drizzle_orm_1.asc)(orderColumn) : (0, drizzle_orm_1.desc)(orderColumn))
+            .limit(perPage)
+            .offset(page * perPage),
         db_1.default.$count(customer_1.customersTable, where),
     ]);
-    const data = rows.map(({ bookings, ...customer }) => ({
-        ...customer,
-        totalBookings: bookings.length,
-        totalSpent: bookings.reduce((totalSpent, booking) => totalSpent + booking.totalPrice, 0),
-    }));
     return { data, total };
 };
 exports.getCustomers = getCustomers;

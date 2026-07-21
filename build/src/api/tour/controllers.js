@@ -9,33 +9,31 @@ const db_1 = __importDefault(require("../../db"));
 const review_1 = require("../../db/review");
 const tour_1 = require("../../db/tour");
 const utils_1 = require("./utils");
-const mapTour = (tour) => {
-    var _a, _b, _c, _d, _e;
-    return ({
-        ...tour,
-        category: (_a = tour.category) === null || _a === void 0 ? void 0 : _a.label,
-        images: ((_b = tour.images) === null || _b === void 0 ? void 0 : _b.map((item) => ({ id: item.id, url: item.url }))) || [],
-        highlights: ((_c = tour.highlights) === null || _c === void 0 ? void 0 : _c.map((item) => ({
-            id: item.id,
-            label: item.label,
-        }))) || [],
-        itinerary: ((_d = tour.itinerary) === null || _d === void 0 ? void 0 : _d.map(({ tourId, ...item }) => item)) || [],
-        reviews: ((_e = tour.reviews) === null || _e === void 0 ? void 0 : _e.map((review) => ({
-            id: review.id,
-            name: review.customerName,
-            avatar: review.avatar,
-            date: review.reviewedAt,
-            rating: review.rating,
-            comment: review.comment,
-        }))) || [],
-    });
-};
 const tourWith = {
-    category: true,
-    images: { orderBy: (0, drizzle_orm_1.asc)(tour_1.tourImagesTable.position) },
-    highlights: { orderBy: (0, drizzle_orm_1.asc)(tour_1.tourHighlightsTable.position) },
-    itinerary: { orderBy: (0, drizzle_orm_1.asc)(tour_1.tourItineraryTable.day) },
-    reviews: { where: (0, drizzle_orm_1.eq)(review_1.reviewsTable.status, "published") },
+    category: { columns: { label: true } },
+    images: {
+        columns: { id: true, url: true },
+        orderBy: (0, drizzle_orm_1.asc)(tour_1.tourImagesTable.position),
+    },
+    highlights: {
+        columns: { id: true, label: true },
+        orderBy: (0, drizzle_orm_1.asc)(tour_1.tourHighlightsTable.position),
+    },
+    itinerary: {
+        columns: { id: true, day: true, title: true, description: true },
+        orderBy: (0, drizzle_orm_1.asc)(tour_1.tourItineraryTable.day),
+    },
+    reviews: {
+        columns: {
+            id: true,
+            customerName: true,
+            avatar: true,
+            reviewedAt: true,
+            rating: true,
+            comment: true,
+        },
+        where: (0, drizzle_orm_1.eq)(review_1.reviewsTable.status, "published"),
+    },
 };
 const createTour = async (data) => {
     const id = await db_1.default.transaction(async (tx) => {
@@ -91,15 +89,14 @@ const getTours = async ({ page, perPage, query, categoryId, difficulty, sortBy, 
         }),
         db_1.default.$count(tour_1.toursTable, where),
     ]);
-    return { data: rows.map(mapTour), total };
+    return { data: rows, total };
 };
 exports.getTours = getTours;
 const getTourById = async (id) => {
-    const row = await db_1.default.query.toursTable.findFirst({
+    return db_1.default.query.toursTable.findFirst({
         where: (0, drizzle_orm_1.eq)(tour_1.toursTable.id, id),
         with: tourWith,
     });
-    return row ? mapTour(row) : undefined;
 };
 exports.getTourById = getTourById;
 const updateTour = async (data) => {

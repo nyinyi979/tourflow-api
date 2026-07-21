@@ -12,6 +12,15 @@ export const bookingItemTypeSchema = Type.Union([
   Type.Literal("activity"),
 ]);
 
+export const paymentMethodSchema = Type.Union([
+  Type.Literal("card"),
+  Type.Literal("wallet"),
+]);
+
+export const payBookingBodySchema = Type.Object({
+  paymentMethod: paymentMethodSchema,
+});
+
 const bookingFields = {
   travelDate: Type.String({ format: "date" }),
   adults: Type.Integer({ minimum: 1 }),
@@ -64,3 +73,4 @@ export type BookingStatus = Static<typeof bookingStatusSchema>;
 export type BookingReadRequest = Static<typeof bookingQuerySchema>;
 export type TBooking = Static<typeof createBookingBodySchema>;
 export type UBooking = Static<typeof updateBookingBodySchema>;
+export type PayBookingRequest = Static<typeof payBookingBodySchema>;
