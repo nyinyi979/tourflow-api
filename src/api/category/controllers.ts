@@ -1,7 +1,10 @@
 import { and, asc, desc, eq, ilike } from "drizzle-orm";
 import db from "../../db";
+import { activitiesTable } from "../../db/activity";
 import { categoriesTable } from "../../db/category";
+import { toursTable } from "../../db/tour";
 import type { CategoryReadRequest, TCategory, UCategory } from "./schemas";
+import { ConflictError } from "../../utils/errors";
 
 export const createCategory = async (data: TCategory) => {
   const response = await db
@@ -72,6 +75,32 @@ export const updateCategory = async (data: UCategory) => {
 };
 
 export const deleteCategory = async (id: string) => {
+  const category = await getCategoryById(id);
+  if (!category) return undefined;
+
+  const [tourCount, activityCount] = await Promise.all([
+    db.$count(toursTable, eq(toursTable.categoryId, id)),
+    db.$count(activitiesTable, eq(activitiesTable.categoryId, id)),
+  ]);
+
+  if (tourCount || activityCount) {
+    let usage = "";
+    if (tourCount) {
+      usage = `${tourCount} tour${tourCount === 1 ? "" : "s"}`;
+    }
+    if (activityCount) {
+      const activities = `${activityCount} activit${
+        activityCount === 1 ? "y" : "ies"
+      }`;
+      usage = usage ? `${usage} and ${activities}` : activities;
+    }
+
+    throw new ConflictError(
+      `This category is used by ${usage}. Reassign or delete those listings first.`,
+      "CATEGORY_IN_USE",
+    );
+  }
+
   const response = await db
     .delete(categoriesTable)
     .where(eq(categoriesTable.id, id))

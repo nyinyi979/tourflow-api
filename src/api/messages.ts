@@ -13,7 +13,7 @@ export const messages = {
     statusCode: 409,
     error: "Conflict",
     message:
-      "This operation cannot be completed because related records exist.",
+      "This record is still being used. Reassign or delete the related records first.",
   },
   forbiddenAccess: {
     statusCode: 403,

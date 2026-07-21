@@ -6,7 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteCategory = exports.updateCategory = exports.getCategoryById = exports.getAllCategories = exports.getCategories = exports.createCategory = void 0;
 const drizzle_orm_1 = require("drizzle-orm");
 const db_1 = __importDefault(require("../../db"));
+const activity_1 = require("../../db/activity");
 const category_1 = require("../../db/category");
+const tour_1 = require("../../db/tour");
+const errors_1 = require("../../utils/errors");
 const createCategory = async (data) => {
     const response = await db_1.default
         .insert(category_1.categoriesTable)
@@ -66,6 +69,24 @@ const updateCategory = async (data) => {
 };
 exports.updateCategory = updateCategory;
 const deleteCategory = async (id) => {
+    const category = await (0, exports.getCategoryById)(id);
+    if (!category)
+        return undefined;
+    const [tourCount, activityCount] = await Promise.all([
+        db_1.default.$count(tour_1.toursTable, (0, drizzle_orm_1.eq)(tour_1.toursTable.categoryId, id)),
+        db_1.default.$count(activity_1.activitiesTable, (0, drizzle_orm_1.eq)(activity_1.activitiesTable.categoryId, id)),
+    ]);
+    if (tourCount || activityCount) {
+        let usage = "";
+        if (tourCount) {
+            usage = `${tourCount} tour${tourCount === 1 ? "" : "s"}`;
+        }
+        if (activityCount) {
+            const activities = `${activityCount} activit${activityCount === 1 ? "y" : "ies"}`;
+            usage = usage ? `${usage} and ${activities}` : activities;
+        }
+        throw new errors_1.ConflictError(`This category is used by ${usage}. Reassign or delete those listings first.`, "CATEGORY_IN_USE");
+    }
     const response = await db_1.default
         .delete(category_1.categoriesTable)
         .where((0, drizzle_orm_1.eq)(category_1.categoriesTable.id, id))
